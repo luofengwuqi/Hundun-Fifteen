@@ -1,6 +1,6 @@
-import { ref } from 'vue'
+ import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import { getUserInfoAPI } from '@/api/user'
+import { getUserInfoAPI, getUserModelStatus } from '@/api/user'
 
 export const useUserStore = defineStore('user', () => {
   //token - 从 localStorage 初始化
@@ -16,6 +16,7 @@ export const useUserStore = defineStore('user', () => {
   //userInfo - 从 localStorage 初始化
   const userInfoStr = localStorage.getItem('userInfo')
   const userInfo = ref(userInfoStr ? JSON.parse(userInfoStr) : {})
+  const userModelStatus = ref({})
   const setUserInfo = (newUserInfo) => {
     userInfo.value = newUserInfo
     if (Object.keys(newUserInfo).length > 0) {
@@ -35,12 +36,44 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  const initUserModelStatus = async () => {
+    try {
+      const res = await getUserModelStatus()
+      if (res.data) {
+        userModelStatus.value = res.data
+      }
+    } catch (error) {
+      console.error('获取用户模型状态失败:', error)
+    }
+  }
+
+  // 启用分类模块
+  const enableCategory = async (categoryKey) => {
+    try {
+      // TODO: 调用后端接口启用分类
+      // await enableCategoryAPI(categoryKey)
+      
+      // 更新本地状态
+      if (userModelStatus.value) {
+        userModelStatus.value[categoryKey] = 1
+      }
+      
+      console.log(`分类 ${categoryKey} 已启用`)
+    } catch (error) {
+      console.error('启用分类失败:', error)
+      throw error
+    }
+  }
+
 
   return {
     token,
     setToken,
     userInfo,
     setUserInfo,
-    initUserInfo
+    initUserInfo,
+    userModelStatus,
+    initUserModelStatus,
+    enableCategory
   }
 })

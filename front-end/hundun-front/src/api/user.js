@@ -113,3 +113,36 @@ export const updatePasswordAPI = async (code,password) => {
 export const updateUserAPI = async (dto) => {
   return await request.put('/user', dto)
 }
+
+//userModelStatus相关代码
+
+/**
+ * 获取用户模块状态
+ */
+export const getUserModelStatus = async () => {
+  return await request.get('/user/model-status')
+}
+
+/**
+ * 更新用户模块状态
+ * @param {Object} dto - 用户模块状态数据
+ * @param {number} dto.health - 健康模块 0禁用 1启用
+ * @param {number} dto.finance - 财务模块 0禁用 1启用
+ * @param {number} dto.knowledge - 知识模块 0禁用 1启用
+ * @param {number} dto.memo - 备忘模块 0禁用 1启用
+ * @param {number} dto.userId - 用户ID
+ */
+export const updateUserModelStatus = async (dto) => {
+  return await request.put('/user/model-status', dto)
+}
+
+/**
+ * 删除用户模块状态（警告：此操作有一定危险性）
+ * @param {Object} userModelStatus - 用户模块状态对象
+ * @param {number} userModelStatus.userId - 用户ID
+ */
+export const deleteUserModelStatus = async (userModelStatus) => {
+  return await request.delete('/user/model-status', {
+    data: userModelStatus
+  })
+}
