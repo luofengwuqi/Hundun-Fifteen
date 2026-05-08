@@ -12,10 +12,10 @@ const router = createRouter({
     {
       path:'/user',
       component:()=>import('@/views/user/UserHome.vue'),
+      redirect:'/user/home',
       children:[
         { path:'info', component:()=>import('@/views/user/component/Info/Info.vue')},
-        { path:'article', component:()=>import('@/views/user/component/article/Article.vue')},
-        { path:'article/:id', component:()=>import('@/views/user/component/article/ArticleDetail.vue')},
+        { path:'home', component:()=>import('@/views/user/component/Home/Home.vue')},
       ]
     },
   ],
