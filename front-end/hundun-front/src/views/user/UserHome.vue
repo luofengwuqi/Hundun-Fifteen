@@ -9,9 +9,9 @@ import HundunHeader from '@/views/user/component/common/HundunHeader.vue'
       <HundunHeader></HundunHeader>
     </div>
     <div class="main">
-      <router-view v-slot="{ Component }" :key="$route.fullPath">
+      <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
-          <component :is="Component" />
+          <component :is="Component" :key="$route.fullPath" />
         </transition>
       </router-view>
     </div>
@@ -43,15 +43,16 @@ import HundunHeader from '@/views/user/component/common/HundunHeader.vue'
   /* 二级路由过渡动画 */
   :deep(.fade-enter-from) {
     opacity: 0;
-    transform: translateX(10px);
+    transform: translateY(20px);
   }
   :deep(.fade-enter-active) {
-    transition: all 0.6s ease-out;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
   :deep(.fade-leave-to) {
     opacity: 0;
+    transform: translateY(-20px);
   }
   :deep(.fade-leave-active) {
-    transition: all 0.5s ease-in;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 </style>

@@ -29,7 +29,7 @@ const handleCommand =  async (command) => {
 const list=[
   { id: 1, name:'首页' ,to:'/user'},
   { id: 2, name:'录入' ,to:'/user/insert'},
-  { id: 3, name:'查看' ,to:'/user/select'},
+  { id: 3, name:'翻找' ,to:'/user/select'},
   { id: 4, name:'帮助' ,to:'/help'}
 ]
 const handleRouter = (to)=>{

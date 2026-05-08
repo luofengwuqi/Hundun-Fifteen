@@ -1,6 +1,7 @@
 <script setup>
 // 首页组件 - 录入与翻找功能入口
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import insertImage from '@/assets/img/user/home/insert.png'
 import selectImage from '@/assets/img/user/home/select.png'
 import healthImage from '@/assets/img/user/home/health.png'
@@ -8,11 +9,15 @@ import financeImage from '@/assets/img/user/home/finance.png'
 import knowledgeImage from '@/assets/img/user/home/knowledge.png'
 import memoImage from '@/assets/img/user/home/memo.png'
 
+const router = useRouter()
 const isExpanded = ref(false)
 const isAnimating = ref(false) // 控制动画状态
 
 const handleBoxClick = (boxType) => {
-  if (boxType === 'right' && !isExpanded.value && !isAnimating.value) {
+  if (boxType === 'left') {
+    // 左侧盒子：跳转到录入页面
+    router.push('/user/insert')
+  } else if (boxType === 'right' && !isExpanded.value && !isAnimating.value) {
     isAnimating.value = true
     // 立即触发展开动画，左侧盒子开始飘出
     isExpanded.value = true
@@ -39,27 +44,38 @@ const categories = [
     id: 1,
     title: '健康',
     subtitle: '人是铁 饭是钢 一顿不吃饿得慌',
-    image: healthImage
+    image: healthImage,
+    path: '/user/select/health'
   },
   {
     id: 2,
     title: '财务',
     subtitle: '金钱不是万能的 但没有钱是万万不能的',
-    image: financeImage
+    image: financeImage,
+    path: '/user/select/finance'
   },
   {
     id: 3,
     title: '知识',
     subtitle: '芝士 就是力量',
-    image: knowledgeImage
+    image: knowledgeImage,
+    path: '/user/select/knowledge'
   },
   {
     id: 4,
     title: '备忘',
     subtitle: '活着不是为了不朽 而是为了创造不朽',
-    image: memoImage
+    image: memoImage,
+    path: '/user/select/memo'
   }
 ]
+
+// 处理小盒子点击事件
+const handleCategoryClick = (category) => {
+  if (category.path) {
+    router.push(category.path)
+  }
+}
 </script>
 
 <template>
@@ -109,6 +125,7 @@ const categories = [
           :key="category.id"
           class="split-box"
           :style="{ animationDelay: `${index * 0.08}s` }"
+          @click="handleCategoryClick(category)"
         >
           <div class="split-box-content">
             <div class="split-image-wrapper">
@@ -146,7 +163,7 @@ const categories = [
   top: 0;
   width: calc(50% - 25px);
   min-height: 480px;
-  background-color: #FFFFFF;
+  background-color: #FFF8E8;
   border-radius: 20px;
   padding: 50px 40px;
   display: flex;
@@ -324,7 +341,7 @@ const categories = [
 
 .split-box {
   min-height: 320px;
-  background-color: #FFFFFF;
+  background-color: #FFF8E8;
   border-radius: 16px;
   padding: 35px 25px;
   display: flex;

@@ -16,6 +16,17 @@ const router = createRouter({
       children:[
         { path:'info', component:()=>import('@/views/user/component/Info/Info.vue')},
         { path:'home', component:()=>import('@/views/user/component/Home/Home.vue')},
+        { path:'insert', component:()=>import('@/views/user/component/Insert/Insert.vue')},
+        {
+          path:'select',
+          redirect:'/user/select/health',
+          children:[
+            { path:'health', component:()=>import('@/views/user/component/Select/HealthSelect.vue')},
+            { path:'finance', component:()=>import('@/views/user/component/Select/FinanceSelect.vue')},
+            { path:'knowledge', component:()=>import('@/views/user/component/Select/KnowledgeSelect.vue')},
+            { path:'memo', component:()=>import('@/views/user/component/Select/MemoSelect.vue')}
+          ]
+        }
       ]
     },
   ],
