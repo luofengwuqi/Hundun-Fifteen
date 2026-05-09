@@ -27,6 +27,8 @@ onMounted( async () => {
 const chargingBoxId = ref(null) // 当前正在充能的盒子ID
 const chargeProgress = ref(0) // 充能进度 0-100
 const isChargingFailed = ref(false) // 充能失败状态(用于动画)
+const chargedCategory = ref(null) // 充能完成待跳转的分类
+const shouldPreventClick = ref(false) // 是否阻止点击事件(充能后松手时)
 let chargeTimer = null
 let chargeStartTime = null
 let fadeOutTimer = null // 淡出定时器
@@ -109,6 +111,12 @@ const categories = computed(() => {
 
 // 处理小盒子点击事件
 const handleCategoryClick = (category) => {
+  // 如果刚充能完成松手,阻止这次点击
+  if (shouldPreventClick.value) {
+    shouldPreventClick.value = false
+    return
+  }
+  
   // 只有启用的盒子才能点击跳转
   if (category.enabled && category.path) {
     router.push(category.path)
@@ -144,6 +152,24 @@ const handleLongPressEnd = () => {
     chargeTimer = null
   }
 
+  // 如果充能已完成,执行路由跳转
+  if (chargedCategory.value) {
+    const category = chargedCategory.value
+    chargedCategory.value = null
+    
+    // 重置充能状态
+    chargeProgress.value = 0
+    chargingBoxId.value = null
+    isChargingFailed.value = false
+    
+    // 标记需要阻止下一次点击事件
+    shouldPreventClick.value = true
+    
+    // 执行路由跳转
+    router.push(category.path)
+    return
+  }
+
   // 如果未完成充能,触发能量消散动画
   if (chargeProgress.value < 100 && chargeProgress.value > 0) {
     isChargingFailed.value = true
@@ -175,19 +201,16 @@ const completeCharging = async (category) => {
   }
 
   try {
-
-
     // 更新本地状态
     await userStore.enableCategory(category.statusKey)
 
     ElMessage.success(`${category.title}模块已启用!`)
 
-    // 延迟重置充能状态
-    setTimeout(() => {
-      chargeProgress.value = 0
-      chargingBoxId.value = null
-      isChargingFailed.value = false
-    }, 500)
+    // 标记充能完成,等待用户松开手后跳转
+    chargedCategory.value = category
+    
+    // 保持充能完成的视觉效果
+    chargeProgress.value = 100
   } catch (error) {
     console.error('启用失败:', error)
     ElMessage.error('启用失败,请重试')
