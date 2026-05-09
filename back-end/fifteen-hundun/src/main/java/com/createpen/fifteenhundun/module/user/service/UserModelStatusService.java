@@ -12,8 +12,11 @@ public interface UserModelStatusService {
 
     /**
      * 初始化用户模块状态（新用户注册时调用）
+     *
+     * @param userId 用户ID
+     * @return 初始化后的用户模块状态
      */
-    void initUserModelStatus(Long userId);
+    UserModelStatus initUserModelStatus(Long userId);
 
     /**
      * 更新用户模块状态
