@@ -4,6 +4,17 @@ import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
 
+// 接收父组件传递的选中操作列表
+const props = defineProps({
+  selectedActions: {
+    type: Array,
+    default: () => []
+  }
+})
+
+// 定义事件
+const emit = defineEmits(['action-select'])
+
 // 根据当前时间获取问候语
 const greeting = computed(() => {
   const hour = new Date().getHours()
@@ -34,7 +45,22 @@ const quickActions = [
 
 const handleQuickAction = (action) => {
   console.log('Quick action:', action.label)
-  // TODO: 触发相应的记录功能
+  
+  // 创建新的选中数组
+  const newSelectedActions = [...props.selectedActions]
+  
+  // 切换选中状态（多选）
+  const index = newSelectedActions.findIndex(a => a === action.label)
+  if (index > -1) {
+    // 已选中，取消选中
+    newSelectedActions.splice(index, 1)
+  } else {
+    // 未选中，添加选中
+    newSelectedActions.push(action.label)
+  }
+  
+  // 触发事件通知父组件
+  emit('action-select', newSelectedActions)
 }
 </script>
 
@@ -55,6 +81,7 @@ const handleQuickAction = (action) => {
         v-for="action in quickActions"
         :key="action.label"
         class="action-button"
+        :class="{ 'is-selected': selectedActions.includes(action.label) }"
         @click="handleQuickAction(action)"
       >
         <span class="action-icon">{{ action.icon }}</span>
@@ -158,6 +185,21 @@ const handleQuickAction = (action) => {
   
   &:active {
     transform: translateY(0);
+  }
+  
+  // 选中态样式
+  &.is-selected {
+    background: #C3272B;
+    border-color: #C3272B;
+    box-shadow: 0 4px 16px rgba(195, 39, 43, 0.3);
+    
+    .action-label {
+      color: #FFFFFF;
+    }
+    
+    .action-icon {
+      transform: scale(1.1);
+    }
   }
 }
 
