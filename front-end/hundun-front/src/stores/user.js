@@ -1,6 +1,6 @@
  import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import { getUserInfoAPI, getUserModelStatus } from '@/api/user'
+import { getUserInfoAPI, getUserModelStatus, updateUserModelStatus } from '@/api/user'
 
 export const useUserStore = defineStore('user', () => {
   //token - 从 localStorage 初始化
@@ -51,13 +51,16 @@ export const useUserStore = defineStore('user', () => {
   const enableCategory = async (categoryKey) => {
     try {
       // TODO: 调用后端接口启用分类
-      // await enableCategoryAPI(categoryKey)
-      
+      console.log(`启用分类 ${categoryKey}`)
+      await updateUserModelStatus({
+        [categoryKey]: 1
+      })
+
       // 更新本地状态
       if (userModelStatus.value) {
         userModelStatus.value[categoryKey] = 1
       }
-      
+
       console.log(`分类 ${categoryKey} 已启用`)
     } catch (error) {
       console.error('启用分类失败:', error)

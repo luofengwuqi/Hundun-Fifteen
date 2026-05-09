@@ -119,17 +119,17 @@ const handleCategoryClick = (category) => {
 const handleLongPressStart = (category) => {
   // 只对未启用的盒子生效
   if (category.enabled) return
-  
+
   chargingBoxId.value = category.id
   chargeProgress.value = 0
   chargeStartTime = Date.now()
-  
+
   // 启动充能动画
   chargeTimer = setInterval(() => {
     const elapsed = Date.now() - chargeStartTime
     const progress = Math.min((elapsed / CHARGE_DURATION) * 100, 100)
     chargeProgress.value = progress
-    
+
     // 充能完成
     if (progress >= 100) {
       completeCharging(category)
@@ -143,16 +143,16 @@ const handleLongPressEnd = () => {
     clearInterval(chargeTimer)
     chargeTimer = null
   }
-  
+
   // 如果未完成充能,触发能量消散动画
   if (chargeProgress.value < 100 && chargeProgress.value > 0) {
     isChargingFailed.value = true
-    
+
     // 清除之前的淡出定时器
     if (fadeOutTimer) {
       clearTimeout(fadeOutTimer)
     }
-    
+
     // 等待消散动画完成后重置状态
     fadeOutTimer = setTimeout(() => {
       chargeProgress.value = 0
@@ -173,16 +173,15 @@ const completeCharging = async (category) => {
     clearInterval(chargeTimer)
     chargeTimer = null
   }
-  
+
   try {
-    // TODO: 调用启用接口
-    // await enableCategoryAPI(category.statusKey)
-    
+
+
     // 更新本地状态
     await userStore.enableCategory(category.statusKey)
-    
+
     ElMessage.success(`${category.title}模块已启用!`)
-    
+
     // 延迟重置充能状态
     setTimeout(() => {
       chargeProgress.value = 0
@@ -193,7 +192,7 @@ const completeCharging = async (category) => {
     console.error('启用失败:', error)
     ElMessage.error('启用失败,请重试')
     isChargingFailed.value = true
-    
+
     // 失败时也触发动画
     setTimeout(() => {
       chargeProgress.value = 0
@@ -250,7 +249,7 @@ const completeCharging = async (category) => {
           v-for="(category, index) in categories"
           :key="category.id"
           class="split-box"
-          :class="{ 
+          :class="{
             'disabled': !category.enabled,
             'charging': chargingBoxId === category.id && !category.enabled,
             'charging-failed': isChargingFailed && chargingBoxId === category.id
@@ -264,7 +263,7 @@ const completeCharging = async (category) => {
           @touchend="handleLongPressEnd"
         >
           <!-- 充能进度条 -->
-          <div 
+          <div
             v-if="chargingBoxId === category.id && !category.enabled"
             class="charge-progress-bar"
             :class="{ 'failing': isChargingFailed }"
@@ -272,14 +271,14 @@ const completeCharging = async (category) => {
           >
             <div class="charge-glow"></div>
           </div>
-          
+
           <div class="split-box-content">
             <div class="split-image-wrapper">
               <img :src="category.image" :alt="category.title" class="split-box-image" />
             </div>
             <h3 class="split-box-title">{{ category.title }}</h3>
             <p class="split-box-subtitle">{{ category.subtitle }}</p>
-            
+
             <!-- 充能提示文字 -->
             <p v-if="chargingBoxId === category.id && !category.enabled" class="charge-hint">
               启用中
@@ -586,7 +585,7 @@ const completeCharging = async (category) => {
       color: #999;
     }
   }
-  
+
   // 充能状态样式
   &.charging {
     cursor: pointer;
@@ -594,34 +593,34 @@ const completeCharging = async (category) => {
     transition: box-shadow 0.3s ease;
     box-shadow: 0 0 30px rgba(255, 248, 232, 0.6),
                 0 0 60px rgba(255, 248, 232, 0.3);
-    
+
     .split-box-image {
       filter: grayscale(0%);
       opacity: 1;
       animation: pulse 0.8s ease-in-out infinite;
     }
-    
+
     .split-box-title {
       color: #C3272B;
       animation: textGlow 0.8s ease-in-out infinite;
     }
-    
+
     .split-box-subtitle {
       color: #666;
       opacity: 1;
     }
   }
-  
+
   // 充能失败(中断)状态
   &.charging-failed {
     .charge-progress-bar {
       animation: energyDissipate 0.4s ease-out forwards;
     }
-    
+
     .split-box-image {
       animation: shake 0.4s ease-in-out;
     }
-    
+
     .split-box-title {
       animation: textFade 0.4s ease-out;
     }
@@ -701,14 +700,14 @@ const completeCharging = async (category) => {
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(to top, 
-    rgba(255, 248, 232, 0.95) 0%, 
+  background: linear-gradient(to top,
+    rgba(255, 248, 232, 0.95) 0%,
     rgba(255, 248, 232, 0.85) 50%,
     rgba(255, 248, 232, 0.7) 100%);
   transition: height 0.05s linear;
   z-index: 1;
   pointer-events: none;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -716,21 +715,21 @@ const completeCharging = async (category) => {
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, 
-      transparent 0%, 
-      #FFF8E8 20%, 
-      #FFFFFF 50%, 
-      #FFF8E8 80%, 
+    background: linear-gradient(90deg,
+      transparent 0%,
+      #FFF8E8 20%,
+      #FFFFFF 50%,
+      #FFF8E8 80%,
       transparent 100%);
     box-shadow: 0 0 20px rgba(255, 248, 232, 0.8),
                 0 0 40px rgba(255, 248, 232, 0.4);
     animation: shimmer 1s ease-in-out infinite;
   }
-  
+
   // 充能中断时的消散动画
   &.failing {
     animation: progressDissipate 0.4s ease-out forwards;
-    
+
     &::before {
       animation: edgeFade 0.4s ease-out forwards;
     }

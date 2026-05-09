@@ -146,3 +146,4 @@ export const deleteUserModelStatus = async (userModelStatus) => {
     data: userModelStatus
   })
 }
+
