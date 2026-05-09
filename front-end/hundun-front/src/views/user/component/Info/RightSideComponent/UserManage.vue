@@ -200,7 +200,7 @@ const handleSubmit = async () => {
           await updateEmailAPI(newValue, password)
           ElMessage.success('邮箱修改成功 (∠・ω< )⌒★')
         } else if (type === 4) {
-          await updatePhoneAPI(newValue, password, formData.value.emailCode)
+          await updatePhoneAPI(newValue, password)
           ElMessage.success('手机号修改成功 (∠・ω< )⌒★')
         }
 
@@ -370,14 +370,6 @@ onUnmounted(() => {
             />
           </el-form-item>
         </template>
-        <!-- 手机号修改时的验证码 -->
-        <el-form-item prop="emailCode" v-if="activeIndex === 4">
-          <el-input
-            v-model="formData.emailCode"
-            placeholder="请输入邮箱验证码"
-            clearable
-          />
-        </el-form-item>
         <div class="form-buttons">
           <el-button type="primary" @click="handleSubmit">确认修改</el-button>
         </div>
