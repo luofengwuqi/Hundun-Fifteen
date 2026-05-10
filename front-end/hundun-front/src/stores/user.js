@@ -50,11 +50,20 @@ export const useUserStore = defineStore('user', () => {
   // 启用分类模块
   const enableCategory = async (categoryKey) => {
     try {
-      // TODO: 调用后端接口启用分类
-      console.log(`启用分类 ${categoryKey}`)
-      await updateUserModelStatus({
+      // 获取当前用户ID
+      const userId = userInfo.value.id
+      if (!userId) {
+        throw new Error('用户ID不存在')
+      }
+
+      // 构建完整的状态更新数据
+      const updateData = {
+        userId,
         [categoryKey]: 1
-      })
+      }
+
+      console.log(`启用分类 ${categoryKey}, 用户ID: ${userId}`)
+      await updateUserModelStatus(updateData)
 
       // 更新本地状态
       if (userModelStatus.value) {

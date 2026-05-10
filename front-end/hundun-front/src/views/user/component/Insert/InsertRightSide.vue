@@ -1,11 +1,17 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useUserStore } from '@/stores/user'
 import WhatAteToday from './form/WhatAteToday.vue'
 import MealCost from './form/MealCost.vue'
 import FeatureDisabled from './form/FeatureDisabled.vue'
 
 const userStore = useUserStore()
+onMounted( async () => {
+  if(!userStore.userModelStatus || !userStore.userModelStatus.health){
+    await userStore.initUserModelStatus()
+  }
+})
+
 
 // 接收父组件传递的选中操作列表
 const props = defineProps({
@@ -27,24 +33,34 @@ const isModulesEnabled = computed(() => {
 // 跟踪隐藏的组件
 const hiddenComponents = ref(new Set())
 
+// 跟踪正在消失的组件（用于动画）
+const disappearingComponents = ref(new Set())
+
 const handleHideComponent = (componentName) => {
-  hiddenComponents.value.add(componentName)
-  emit('hide-component', componentName)
+  // 标记为正在消失，触发离开动画
+  disappearingComponents.value.add(componentName)
+
+  // 等待动画完成后真正隐藏
+  setTimeout(() => {
+    hiddenComponents.value.add(componentName)
+    disappearingComponents.value.delete(componentName)
+    emit('hide-component', componentName)
+  }, 300) // 与 CSS 过渡时间保持一致
 }
 
 // 根据选中的操作和模块状态，决定显示哪些组件
 const componentsToShow = computed(() => {
   const components = []
-  
+
   // 检查是否选中了"吃了什么"
   const hasSelectedEat = props.selectedActions.includes('吃了什么')
-  
+
   if (hasSelectedEat) {
-    // 如果选中了“吃了什么”，检查模块是否启用
+    // 如果选中了"吃了什么"，检查模块是否启用
     if (!isModulesEnabled.value) {
       // 模块未启用，显示功能禁用组件
-      components.push({ 
-        name: 'FeatureDisabled', 
+      components.push({
+        name: 'FeatureDisabled',
         component: FeatureDisabled,
         props: {
           title: '功能未启用 (灬º﹃º灬)',
@@ -53,24 +69,24 @@ const componentsToShow = computed(() => {
         }
       })
     } else {
-      // 模块已启用，显示正常组件（如果未被隐藏）
-      if (!hiddenComponents.value.has('WhatAteToday')) {
-        components.push({ 
-          name: 'WhatAteToday', 
+      // 模块已启用，显示正常组件（如果未被隐藏且不在消失过程中）
+      if (!hiddenComponents.value.has('WhatAteToday') && !disappearingComponents.value.has('WhatAteToday')) {
+        components.push({
+          name: 'WhatAteToday',
           component: WhatAteToday,
           onHide: () => handleHideComponent('WhatAteToday')
         })
       }
-      if (!hiddenComponents.value.has('MealCost')) {
-        components.push({ 
-          name: 'MealCost', 
+      if (!hiddenComponents.value.has('MealCost') && !disappearingComponents.value.has('MealCost')) {
+        components.push({
+          name: 'MealCost',
           component: MealCost,
           onHide: () => handleHideComponent('MealCost')
         })
       }
     }
   }
-  
+
   // TODO: 其他操作的逻辑
   if (props.selectedActions.includes('去了哪里')) {
     // TODO: 添加对应的组件
@@ -92,15 +108,16 @@ const componentsToShow = computed(() => {
     // TODO: 添加对应的组件
     console.log('TODO: 添加今日感悟的组件')
   }
-  
+
   return components
 })
 
 // 监听选中操作变化，重置隐藏状态
 import { watch } from 'vue'
 watch(() => props.selectedActions, () => {
-  // 当选中操作变化时，清空隐藏状态
+  // 当选中操作变化时，清空隐藏状态和消失状态
   hiddenComponents.value.clear()
+  disappearingComponents.value.clear()
 }, { deep: true })
 </script>
 
@@ -110,7 +127,7 @@ watch(() => props.selectedActions, () => {
     <div class="workspace-title">
       <h2>工作台</h2>
     </div>
-    
+
     <!-- 空状态提示 -->
     <div v-if="componentsToShow.length === 0" class="empty-state">
       <p class="empty-text">请选择左侧的操作项 (・ω< )</p>
@@ -118,11 +135,13 @@ watch(() => props.selectedActions, () => {
     <!-- 组件列表 -->
     <ul v-else class="component-list">
       <li v-for="item in componentsToShow" :key="item.name" class="component-item">
-        <component 
-          :is="item.component" 
-          v-bind="item.props || {}" 
-          @hide="item.onHide"
-        />
+        <Transition name="component-fade" mode="out-in">
+          <component
+            :is="item.component"
+            v-bind="item.props || {}"
+            @hide="item.onHide"
+          />
+        </Transition>
       </li>
     </ul>
   </div>
@@ -140,7 +159,7 @@ watch(() => props.selectedActions, () => {
 .workspace-title {
   text-align: center;
   margin-bottom: 32px;
-  
+
   h2 {
     font-size: 42px;
     font-weight: 700;
@@ -156,7 +175,7 @@ watch(() => props.selectedActions, () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
   .empty-text {
     font-size: 18px;
     color: #999;
@@ -175,19 +194,19 @@ watch(() => props.selectedActions, () => {
   gap: 20px;
   overflow-y: auto;
   align-content: flex-start;
-  
+
   &::-webkit-scrollbar {
     width: 6px;
   }
-  
+
   &::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   &::-webkit-scrollbar-thumb {
     background: rgba(0, 0, 0, 0.15);
     border-radius: 3px;
-    
+
     &:hover {
       background: rgba(0, 0, 0, 0.25);
     }
@@ -199,15 +218,34 @@ watch(() => props.selectedActions, () => {
   flex: 0 0 calc(33.333% - 14px);
   aspect-ratio: 1 / 1;
   min-width: 250px;
-  
+
   // 让内部组件填满整个 li
   > * {
     width: 100%;
     height: 100%;
   }
-  
+
   // 组件进入动画
   animation: componentEnter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+// 组件消失过渡动画
+.component-fade-enter-active {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.component-fade-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.component-fade-enter-from {
+  opacity: 0;
+  transform: scale(0.9) translateY(10px);
+}
+
+.component-fade-leave-to {
+  opacity: 0;
+  transform: scale(0.85) translateY(-15px);
 }
 
 @keyframes componentEnter {

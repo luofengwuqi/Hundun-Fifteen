@@ -18,9 +18,10 @@ const isAnimating = ref(false) // 控制动画状态
 //pinia
 const userStore = useUserStore()
 onMounted( async () => {
-  //组件被渲染时 初始化用户状态
-  await userStore.initUserModelStatus()
-  console.log(userStore.userModelStatus)
+  if(!userStore.userModelStatus){
+    await userStore.initUserModelStatus()
+    console.log(userStore.userModelStatus)
+  }
 })
 
 // 长按充能相关状态
@@ -116,7 +117,7 @@ const handleCategoryClick = (category) => {
     shouldPreventClick.value = false
     return
   }
-  
+
   // 只有启用的盒子才能点击跳转
   if (category.enabled && category.path) {
     router.push(category.path)
@@ -156,15 +157,15 @@ const handleLongPressEnd = () => {
   if (chargedCategory.value) {
     const category = chargedCategory.value
     chargedCategory.value = null
-    
+
     // 重置充能状态
     chargeProgress.value = 0
     chargingBoxId.value = null
     isChargingFailed.value = false
-    
+
     // 标记需要阻止下一次点击事件
     shouldPreventClick.value = true
-    
+
     // 执行路由跳转
     router.push(category.path)
     return
@@ -208,7 +209,7 @@ const completeCharging = async (category) => {
 
     // 标记充能完成,等待用户松开手后跳转
     chargedCategory.value = category
-    
+
     // 保持充能完成的视觉效果
     chargeProgress.value = 100
   } catch (error) {
