@@ -1,8 +1,11 @@
 import request from '@/utils/request.js'
 
 export const insertFoodAPI = async (dto)=>{
-  return await request.post('/health',dto)
+  return await request.post('food/health',dto)
+}
 
+export const updateFoodAPI = async (dto)=>{
+  return await request.put('food/health',dto)
 }
 
 export const insertFoodMoneyAPI = async (dto)=>{
