@@ -14,7 +14,7 @@ public class DayFoodPrice implements Serializable {
     private Long id;
     private Long userId;
     private LocalDate date;
-    private Integer morningGoodFoodPrice;
+    private Integer morningFoodPrice;
     private Integer afternoonFoodPrice;
     private Integer eveningFoodPrice;
     private Integer elseFoodPrice;

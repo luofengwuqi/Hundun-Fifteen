@@ -4,12 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 public class DayFoodPriceDTO {
-    private Integer morningGoodFoodPrice;
-    private Integer afternoonFoodPrice;
-    private Integer eveningFoodPrice;
-    private Integer elseFoodPrice;
+    private BigDecimal morningFoodPrice;
+    private BigDecimal afternoonFoodPrice;
+    private BigDecimal eveningFoodPrice;
+    private BigDecimal elseFoodPrice;
 }

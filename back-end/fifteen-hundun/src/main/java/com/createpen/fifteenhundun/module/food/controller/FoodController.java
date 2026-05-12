@@ -5,13 +5,10 @@ import com.createpen.fifteenhundun.module.food.pojo.DTO.DayFoodDTO;
 import com.createpen.fifteenhundun.module.food.pojo.DTO.DayFoodPriceDTO;
 import com.createpen.fifteenhundun.module.food.service.FoodService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-@RequestMapping
-@RestController("/eat")
+@RequestMapping("/food")
+@RestController
 @Slf4j
 public class FoodController {
     private final FoodService foodService;
@@ -28,10 +25,20 @@ public class FoodController {
     }
 
     //吃了多少钱
-    @PostMapping("/money")
-    public Result<Void> insertFoodMoney(@RequestBody DayFoodPriceDTO dto) {
+    @PostMapping("/finance")
+    public Result<Integer> insertFoodMoney(@RequestBody DayFoodPriceDTO dto) {
         log.info("insertMoney");
-        foodService.insertFoodMoney(dto);
+        log.info("{}", dto);
+        //flag:1 成功 0 失败
+        Integer flag = foodService.insertFoodMoney(dto);
+        return Result.success(flag);
+    }
+
+    @PutMapping("/finance")
+    public Result<Integer> updateFoodMoney(@RequestBody DayFoodPriceDTO dto) {
+        log.info("updateMoney");
+        log.info("{}", dto);
+        foodService.updateFoodMoney(dto);
         return Result.success();
     }
 }
