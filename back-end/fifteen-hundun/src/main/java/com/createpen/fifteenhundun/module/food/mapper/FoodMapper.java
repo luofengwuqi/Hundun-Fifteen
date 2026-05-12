@@ -16,9 +16,6 @@ public interface FoodMapper {
             "VALUES (#{userId}, #{date}, #{morningFoodPrice}, #{afternoonFoodPrice}, #{eveningFoodPrice}, #{elseFoodPrice})")
     void insertFoodMoney(DayFoodPrice dayFoodPrice);
 
-
-
-
     @Insert("INSERT INTO user_food_health(user_id, date, morning_food, afternoon_food, evening_food, else_food) " +
             "VALUES (#{userId}, #{date}, #{morningFood}, #{afternoonFood}, #{eveningFood}, #{elseFood})")
     void insertFood(DayFood dayFood);
@@ -28,4 +25,7 @@ public interface FoodMapper {
 
     @Update("UPDATE user_food_finance SET morning_food_price = #{morningFoodPrice}, afternoon_food_price = #{afternoonFoodPrice}, evening_food_price = #{eveningFoodPrice}, else_food_price = #{elseFoodPrice} where user_id =#{userId} and date = #{date}" )
     void updateFoodMoney(DayFoodPrice dayFoodPrice);
+
+    @Select("SELECT * FROM user_food_health WHERE user_id = #{userId} AND date = #{date}")
+    DayFood selectFoodByUserIdAndDate(Long userId, LocalDate date);
 }

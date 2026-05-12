@@ -57,12 +57,12 @@ public class GlobalExceptionHandler {
     }
 
     //运行时异常处理
-    @ExceptionHandler
-    public Result<Void> handleRuntimeException(RuntimeException e) {
-        String msg = e.getMessage();
-        log.info("运行时异常信息:{}",msg);
-        return Result.fail(500,msg);
-    }
+//    @ExceptionHandler
+//    public Result<Void> handleRuntimeException(RuntimeException e) {
+//        String msg = e.getMessage();
+//        log.info("运行时异常信息:{}",msg);
+//        return Result.fail(500,msg);
+//    }
 
     //OSS异常
     @ExceptionHandler

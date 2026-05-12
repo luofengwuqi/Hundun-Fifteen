@@ -18,10 +18,10 @@ public class FoodController {
 
     //吃了什么
     @PostMapping("/health")
-    public Result<Void> insertFood(@RequestBody DayFoodDTO dto) {
+    public Result<Integer> insertFood(@RequestBody DayFoodDTO dto) {
         log.info("insertFood");
-        foodService.insertFood(dto);
-        return Result.success();
+        Integer flag = foodService.insertFood(dto);
+        return Result.success(flag);
     }
 
     //吃了多少钱

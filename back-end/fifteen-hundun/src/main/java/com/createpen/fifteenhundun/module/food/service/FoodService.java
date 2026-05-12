@@ -4,7 +4,7 @@ import com.createpen.fifteenhundun.module.food.pojo.DTO.DayFoodDTO;
 import com.createpen.fifteenhundun.module.food.pojo.DTO.DayFoodPriceDTO;
 
 public interface FoodService {
-    void insertFood(DayFoodDTO dayFood);
+    int insertFood(DayFoodDTO dayFood);
 
     Integer insertFoodMoney(DayFoodPriceDTO dayFoodPrice);
 

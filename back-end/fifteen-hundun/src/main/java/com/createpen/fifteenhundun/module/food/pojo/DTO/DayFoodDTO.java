@@ -8,8 +8,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DayFoodDTO {
-    private Integer morningFood;
-    private Integer afternoonFood;
-    private Integer eveningFood;
-    private Integer elseFood;
+    private String morningFood;
+    private String afternoonFood;
+    private String eveningFood;
+    private String elseFood;
 }

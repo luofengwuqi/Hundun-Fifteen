@@ -13,8 +13,8 @@ public class DayFood implements Serializable {
     private Long id;
     private Long userId;
     private LocalDate date;
-    private Integer morningGoodFood;
-    private Integer afternoonFood;
-    private Integer eveningFood;
-    private Integer elseFood;
+    private String morningFood;
+    private String afternoonFood;
+    private String eveningFood;
+    private String elseFood;
 }

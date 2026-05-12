@@ -9,7 +9,6 @@ import com.createpen.fifteenhundun.module.food.pojo.Entity.DayFood;
 import com.createpen.fifteenhundun.module.food.pojo.Entity.DayFoodPrice;
 import com.createpen.fifteenhundun.module.food.service.FoodService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,17 +23,39 @@ public class FoodServiceImpl implements FoodService {
     public FoodServiceImpl(FoodMapper foodMapper) {
         this.foodMapper = foodMapper;
     }
+    /*
+        健康
+    */
 
     @Override
-    public void insertFood(DayFoodDTO dto) {
-        //校验?
+    public int insertFood(DayFoodDTO dto) {
         //对象
-        DayFood dayFood = new DayFood();
-        BeanUtils.copyProperties(dto, dayFood);
-        dayFood.setUserId(BaseContext.getCurrentId());
-        dayFood.setDate(LocalDate.now());
+        DayFood dayFood = foodDTOToEntity(dto);
+        //校验
+        if(isFoodExist(dayFood)){
+            log.info("记录已存在");
+            return 0;
+        }
         //数据库
         foodMapper.insertFood(dayFood);
+        return 1;//执行成功标识
+    }
+    //校验
+    private boolean isFoodExist(DayFood dayFood) {
+        DayFood entityInMysql = foodMapper.selectFoodByUserIdAndDate(dayFood.getUserId(),dayFood.getDate());
+        return entityInMysql != null && entityInMysql.getId() != null;
+    }
+
+    //对象
+    private DayFood foodDTOToEntity(DayFoodDTO dto){
+        DayFood dayFood = new DayFood();
+        dayFood.setUserId(BaseContext.getCurrentId());
+        dayFood.setDate(LocalDate.now());
+        dayFood.setMorningFood(dto.getMorningFood()==null ? "" : dto.getMorningFood());
+        dayFood.setAfternoonFood(dto.getAfternoonFood()==null ? "" : dto.getAfternoonFood());
+        dayFood.setEveningFood(dto.getEveningFood()==null ? "" : dto.getEveningFood());
+        dayFood.setElseFood(dto.getElseFood()==null ? "" : dto.getElseFood());
+        return dayFood;
     }
     /*
         财务代码
