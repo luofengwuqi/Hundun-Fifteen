@@ -56,13 +56,15 @@ export const useUserStore = defineStore('user', () => {
         throw new Error('用户ID不存在')
       }
 
-      // 构建完整的状态更新数据
+      // 构建完整的状态更新数据（合并现有状态，避免覆盖其他字段）
       const updateData = {
         userId,
-        [categoryKey]: 1
+        ...userModelStatus.value,  // 保留现有的所有状态
+        [categoryKey]: 1           // 更新目标字段为启用
       }
 
       console.log(`启用分类 ${categoryKey}, 用户ID: ${userId}`)
+      console.log('发送的完整数据:', updateData)
       await updateUserModelStatus(updateData)
 
       // 更新本地状态

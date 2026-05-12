@@ -133,17 +133,15 @@ watch(() => props.selectedActions, () => {
       <p class="empty-text">请选择左侧的操作项 (・ω< )</p>
     </div>
     <!-- 组件列表 -->
-    <ul v-else class="component-list">
+    <TransitionGroup v-else name="component-fade" tag="ul" class="component-list">
       <li v-for="item in componentsToShow" :key="item.name" class="component-item">
-        <Transition name="component-fade" mode="out-in">
-          <component
-            :is="item.component"
-            v-bind="item.props || {}"
-            @hide="item.onHide"
-          />
-        </Transition>
+        <component
+          :is="item.component"
+          v-bind="item.props || {}"
+          @hide="item.onHide"
+        />
       </li>
-    </ul>
+    </TransitionGroup>
   </div>
 </template>
 
@@ -224,12 +222,9 @@ watch(() => props.selectedActions, () => {
     width: 100%;
     height: 100%;
   }
-
-  // 组件进入动画
-  animation: componentEnter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
-// 组件消失过渡动画
+// TransitionGroup 列表过渡动画
 .component-fade-enter-active {
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -240,22 +235,11 @@ watch(() => props.selectedActions, () => {
 
 .component-fade-enter-from {
   opacity: 0;
-  transform: scale(0.9) translateY(10px);
+  transform: scale(0.8) translateY(20px);
 }
 
 .component-fade-leave-to {
   opacity: 0;
   transform: scale(0.85) translateY(-15px);
-}
-
-@keyframes componentEnter {
-  from {
-    opacity: 0;
-    transform: scale(0.8) translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
 }
 </style>

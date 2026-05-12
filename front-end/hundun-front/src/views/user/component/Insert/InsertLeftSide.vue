@@ -30,7 +30,7 @@ const greeting = computed(() => {
 })
 
 const username = computed(() => {
-  return userStore.userInfo?.username || '朋友'
+  return userStore.userInfo?.nickname || userStore.userInfo?.username
 })
 
 // 快捷记录选项
@@ -45,10 +45,10 @@ const quickActions = [
 
 const handleQuickAction = (action) => {
   console.log('Quick action:', action.label)
-  
+
   // 创建新的选中数组
   const newSelectedActions = [...props.selectedActions]
-  
+
   // 切换选中状态（多选）
   const index = newSelectedActions.findIndex(a => a === action.label)
   if (index > -1) {
@@ -58,7 +58,7 @@ const handleQuickAction = (action) => {
     // 未选中，添加选中
     newSelectedActions.push(action.label)
   }
-  
+
   // 触发事件通知父组件
   emit('action-select', newSelectedActions)
 }
@@ -70,7 +70,7 @@ const handleQuickAction = (action) => {
     <div class="greeting-section">
       <h1 class="greeting-title">
         <span class="greeting-text">{{ greeting }}</span>
-        <span class="username">{{ username }}</span>
+        <span class="username">{{ username }} sama</span>
       </h1>
       <p class="subtitle">今天想记写什么(・ω&lt; )</p>
     </div>
@@ -156,7 +156,7 @@ const handleQuickAction = (action) => {
   box-shadow: 0 2px 8px rgba(195, 39, 43, 0.08);
   position: relative;
   overflow: hidden;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -168,35 +168,35 @@ const handleQuickAction = (action) => {
     opacity: 0;
     transition: opacity 0.3s ease;
   }
-  
+
   &:hover {
     border-color: #C3272B;
     transform: translateY(-2px);
     box-shadow: 0 4px 16px rgba(195, 39, 43, 0.15);
-    
+
     &::before {
       opacity: 1;
     }
-    
+
     .action-icon {
       transform: scale(1.15) rotate(-5deg);
     }
   }
-  
+
   &:active {
     transform: translateY(0);
   }
-  
+
   // 选中态样式
   &.is-selected {
     background: #C3272B;
     border-color: #C3272B;
     box-shadow: 0 4px 16px rgba(195, 39, 43, 0.3);
-    
+
     .action-label {
       color: #FFFFFF;
     }
-    
+
     .action-icon {
       transform: scale(1.1);
     }
