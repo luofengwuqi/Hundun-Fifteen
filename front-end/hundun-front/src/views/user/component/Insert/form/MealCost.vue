@@ -1,23 +1,25 @@
 <script setup>
 import {  reactive } from 'vue'
+import {  insertFoodMoneyAPI, updateFoodMoneyAPI } from '@/api/food.js'
+import {  ElMessage, ElMessageBox } from 'element-plus'
 
 // 定义事件
 const emit = defineEmits(['hide'])
 
 // 表单数据
 const mealData = reactive({
-  breakfast: '',
-  lunch: '',
-  dinner: '',
-  other: ''
+  morningFoodPrice: '',
+  afternoonFoodPrice: '',
+  eveningFoodPrice: '',
+  elseFoodPrice: ''
 })
 
 // 错误信息
 const errors = reactive({
-  breakfast: '',
-  lunch: '',
-  dinner: '',
-  other: ''
+  morningFoodPrice: '',
+  afternoonFoodPrice: '',
+  eveningFoodPrice: '',
+  elseFoodPrice: ''
 })
 
 // 验证单个字段
@@ -63,14 +65,56 @@ const handleOK = async () => {
     return
   }
 
-  // TODO: 调用后端接口保存数据
-  console.log('保存饮食花费记录:', mealData)
+  // 处理空字符串，转换为 null
+  const dataToSend = {
+    morningFoodPrice: mealData.morningFoodPrice || null,
+    afternoonFoodPrice: mealData.afternoonFoodPrice || null,
+    eveningFoodPrice: mealData.eveningFoodPrice || null,
+    elseFoodPrice: mealData.elseFoodPrice || null
+  }
+
+  console.log('保存饮食花费记录:', dataToSend)
   try {
-    // const res = await saveMealCostAPI(mealData)
+    const res = await insertFoodMoneyAPI(dataToSend)
+    //res.data.code:1 成功 0 已存在
+    if(res.data === 0){
+      //已有记录 弹出警告框
+      showWarning(dataToSend)
+      return
+    }
+    ElMessage.success('保存成功(∠・ω< )⌒★')
     emit('hide')
   } catch (error) {
     console.error('保存失败:', error)
   }
+}
+
+//警告框函数
+const showWarning = (dto) => {
+  ElMessageBox.confirm(
+    `您今天似乎已经记录过了呢/w\\
+    继续执行将覆盖先前的记录确定要继续吗?`,
+    'Warning',
+    {
+      confirmButtonText: '你说得对',
+      cancelButtonText: '啊错错错',
+      type: 'warning',
+    }
+  )
+    .then(() => {
+      updateFoodMoneyAPI(dto)
+      emit('hide')
+      ElMessage({
+        type: 'success',
+        message: '执行成功(∠・ω< )⌒★',
+      })
+    })
+    .catch(() => {
+      ElMessage({
+        type: 'info',
+        message: '已取消操作/w\\',
+      })
+    })
 }
 </script>
 
@@ -83,73 +127,74 @@ const handleOK = async () => {
       <div class="meal-form">
         <!-- 早餐 -->
         <div class="meal-item">
-          <label class="meal-label" for="breakfast">
+          <label class="meal-label" for="morningFoodPrice">
             <span class="meal-icon">🌅</span>
             <span class="meal-name">早餐</span>
           </label>
           <input
-            id="breakfast"
-            v-model="mealData.breakfast"
-            @input="handleInput('breakfast')"
+            id="morningFoodPrice"
+            v-model="mealData.morningFoodPrice"
+            @input="handleInput('morningFoodPrice')"
             type="text"
+            placeholder="早餐消费"
             class="meal-input"
-            :class="{ 'has-error': errors.breakfast }"
+            :class="{ 'has-error': errors.morningFoodPrice }"
           />
-          <span v-if="errors.breakfast" class="error-message">{{ errors.breakfast }}</span>
+          <span v-if="errors.morningFoodPrice" class="error-message">{{ errors.morningFoodPrice }}</span>
         </div>
 
         <!-- 午餐 -->
         <div class="meal-item">
-          <label class="meal-label" for="lunch">
+          <label class="meal-label" for="afternoonFoodPrice">
             <span class="meal-icon">☀️</span>
             <span class="meal-name">午餐</span>
           </label>
           <input
-            id="lunch"
-            v-model="mealData.lunch"
-            @input="handleInput('lunch')"
+            id="afternoonFoodPrice"
+            v-model="mealData.afternoonFoodPrice"
+            @input="handleInput('afternoonFoodPrice')"
             type="text"
-            placeholder="0.00"
+            placeholder="午餐消费"
             class="meal-input"
-            :class="{ 'has-error': errors.lunch }"
+            :class="{ 'has-error': errors.afternoonFoodPrice }"
           />
-          <span v-if="errors.lunch" class="error-message">{{ errors.lunch }}</span>
+          <span v-if="errors.afternoonFoodPrice" class="error-message">{{ errors.afternoonFoodPrice }}</span>
         </div>
 
         <!-- 晚餐 -->
         <div class="meal-item">
-          <label class="meal-label" for="dinner">
+          <label class="meal-label" for="eveningFoodPrice">
             <span class="meal-icon">🌙</span>
             <span class="meal-name">晚餐</span>
           </label>
           <input
-            id="dinner"
-            v-model="mealData.dinner"
-            @input="handleInput('dinner')"
+            id="eveningFoodPrice"
+            v-model="mealData.eveningFoodPrice"
+            @input="handleInput('eveningFoodPrice')"
             type="text"
-            placeholder="0.00"
+            placeholder="晚餐消费"
             class="meal-input"
-            :class="{ 'has-error': errors.dinner }"
+            :class="{ 'has-error': errors.eveningFoodPrice }"
           />
-          <span v-if="errors.dinner" class="error-message">{{ errors.dinner }}</span>
+          <span v-if="errors.eveningFoodPrice" class="error-message">{{ errors.eveningFoodPrice }}</span>
         </div>
 
         <!-- 其他 -->
         <div class="meal-item">
-          <label class="meal-label" for="other">
+          <label class="meal-label" for="elseFoodPrice">
             <span class="meal-icon">✨</span>
             <span class="meal-name">其他</span>
           </label>
           <input
-            id="other"
-            v-model="mealData.other"
-            @input="handleInput('other')"
+            id="elseFoodPrice"
+            v-model="mealData.elseFoodPrice"
+            @input="handleInput('elseFoodPrice')"
             type="text"
-            placeholder="0.00"
+            placeholder="有没有吃夜宵?"
             class="meal-input"
-            :class="{ 'has-error': errors.other }"
+            :class="{ 'has-error': errors.elseFoodPrice }"
           />
-          <span v-if="errors.other" class="error-message">{{ errors.other }}</span>
+          <span v-if="errors.elseFoodPrice" class="error-message">{{ errors.elseFoodPrice }}</span>
         </div>
       </div>
     </div>

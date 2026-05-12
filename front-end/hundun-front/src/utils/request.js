@@ -31,7 +31,7 @@ request.interceptors.request.use((config) => {
 
 // 响应拦截器
 request.interceptors.response.use(
-  (response) => {
+  async (response) => {
     // console.log(response.data.code)
     // 文件下载特殊处理
     if (response.request.responseType === "blob") return response;
@@ -45,10 +45,11 @@ request.interceptors.response.use(
     if (response.data.code === 401) {
       console.log("401")
       userStore?.setToken("");
+      userStore?.setUserInfo({});
       ElMessage.warning(response.data.message);
 
       if (router.currentRoute.value.path !== "/login") {
-        router.push("/login");
+        await router.push("/login");
       }
       // 返回完整的响应数据结构，让调用方能正确处理
       return Promise.reject({
@@ -66,6 +67,7 @@ request.interceptors.response.use(
     // HTTP 状态码 401（服务器直接返回 401 状态）
     if (error.response?.status === 401) {
       userStore?.setToken("");
+      userStore?.setUserInfo({});
       ElMessage.warning("登录已过期，请重新登录");
 
       if (router.currentRoute.value.path !== "/login") {
