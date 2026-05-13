@@ -3,6 +3,7 @@ package com.createpen.fifteenhundun.module.food.service.impl;
 import com.createpen.fifteenhundun.common.context.BaseContext;
 import com.createpen.fifteenhundun.common.exception.MyException.UserExistedException;
 import com.createpen.fifteenhundun.module.food.cache.FoodFinanceRedisService;
+import com.createpen.fifteenhundun.module.food.cache.FoodHealthRedisService;
 import com.createpen.fifteenhundun.module.food.mapper.FoodMapper;
 import com.createpen.fifteenhundun.module.food.pojo.DTO.DayFoodDTO;
 import com.createpen.fifteenhundun.module.food.pojo.DTO.DayFoodPriceDTO;
@@ -20,33 +21,52 @@ import java.time.LocalDate;
 @Service
 public class FoodServiceImpl implements FoodService {
     private final FoodFinanceRedisService foodFinanceRedisService;
+    private final FoodHealthRedisService foodHealthRedisService;
     private final FoodMapper foodMapper;
 
-    public FoodServiceImpl(FoodFinanceRedisService foodFinanceRedisService, FoodMapper foodMapper) {
+    public FoodServiceImpl(FoodFinanceRedisService foodFinanceRedisService, 
+                          FoodHealthRedisService foodHealthRedisService,
+                          FoodMapper foodMapper) {
         this.foodFinanceRedisService = foodFinanceRedisService;
+        this.foodHealthRedisService = foodHealthRedisService;
         this.foodMapper = foodMapper;
     }
     /*
         健康
     */
 
+    @Transactional
     @Override
-    public int insertFood(DayFoodDTO dto) { //todo redis
+    public int insertFood(DayFoodDTO dto) {
         //对象
         DayFood dayFood = foodDTOToEntity(dto);
         //校验
         if(isFoodExist(dayFood)){
-            log.info("记录已存在");
+            log.info("饮食健康记录已存在，跳过插入");
             return 0;
         }
         //数据库
         foodMapper.insertFood(dayFood);
+        //缓存
+        foodHealthRedisService.save(dayFood);
+        log.info("饮食健康记录已录入");
         return 1;//执行成功标识
     }
-    //校验 todo redis
+    //校验
     private boolean isFoodExist(DayFood dayFood) {
+        //先查 Redis
+        DayFood entityInRedis = foodHealthRedisService.select(dayFood.getUserId(), dayFood.getDate());
+        if (entityInRedis != null && entityInRedis.getId() != null){
+            return true;
+        }
+        //再查 MySQL
         DayFood entityInMysql = foodMapper.selectFoodByUserIdAndDate(dayFood.getUserId(),dayFood.getDate());
-        return entityInMysql != null && entityInMysql.getId() != null;
+        if (entityInMysql != null && entityInMysql.getId() != null){
+            //回填缓存
+            foodHealthRedisService.save(entityInMysql);
+            return true;
+        }
+        return false;
     }
 
     //对象
@@ -73,13 +93,13 @@ public class FoodServiceImpl implements FoodService {
         DayFoodPrice dayFoodPrice = priceDTOToEntity(dto);
         //校验
         if(isFoodPriceExist(dayFoodPrice)){
-            log.info("FoodPrice记录已存在");
+            log.info("饮食费用记录已存在，跳过插入");
             return 0;//已存在标识
         }
         //数据库
         foodMapper.insertFoodMoney(dayFoodPrice);
         foodFinanceRedisService.save(dayFoodPrice);
-        log.info("FoodPrice记录已录入");
+        log.info("饮食费用记录已录入");
         return 1;//执行成功标识
     }
     //校验
@@ -128,27 +148,29 @@ public class FoodServiceImpl implements FoodService {
         DayFoodPrice dayFoodPrice = priceDTOToEntity(dto);
         //校验
         if(!isFoodPriceExist(dayFoodPrice)){
-            log.warn("记录不存在");
-            throw new UserExistedException("记录不存在");
+            log.warn("饮食费用记录不存在，无法更新");
+            throw new UserExistedException("饮食费用记录不存在，无法更新");
         }
         //数据库
         foodMapper.updateFoodMoney(dayFoodPrice);
         foodFinanceRedisService.delete(dayFoodPrice.getUserId(), dayFoodPrice.getDate());
-        log.info("记录已更新");
+        log.info("饮食费用记录已更新，缓存已清除");
     }
 
-    //todo redis
+    @Transactional
     @Override
     public void updateFood(DayFoodDTO dto) {
         //对象
         DayFood dayFood = foodDTOToEntity(dto);
         //校验
         if (!isFoodExist(dayFood)) {
-            throw new UserExistedException("记录不存在");
+            throw new UserExistedException("饮食健康记录不存在，无法更新");
         }
         //数据库
         foodMapper.updateFood(dayFood);
-
+        //删除旧缓存（下次查询时会从数据库加载并重新缓存）
+        foodHealthRedisService.delete(dayFood.getUserId(), dayFood.getDate());
+        log.info("饮食健康记录已更新，缓存已清除");
     }
 
 
