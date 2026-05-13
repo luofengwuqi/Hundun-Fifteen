@@ -2,6 +2,7 @@ package com.createpen.fifteenhundun.module.food.service.impl;
 
 import com.createpen.fifteenhundun.common.context.BaseContext;
 import com.createpen.fifteenhundun.common.exception.MyException.UserExistedException;
+import com.createpen.fifteenhundun.module.food.cache.FoodFinanceRedisService;
 import com.createpen.fifteenhundun.module.food.mapper.FoodMapper;
 import com.createpen.fifteenhundun.module.food.pojo.DTO.DayFoodDTO;
 import com.createpen.fifteenhundun.module.food.pojo.DTO.DayFoodPriceDTO;
@@ -18,9 +19,11 @@ import java.time.LocalDate;
 @Slf4j
 @Service
 public class FoodServiceImpl implements FoodService {
+    private final FoodFinanceRedisService foodFinanceRedisService;
     private final FoodMapper foodMapper;
 
-    public FoodServiceImpl(FoodMapper foodMapper) {
+    public FoodServiceImpl(FoodFinanceRedisService foodFinanceRedisService, FoodMapper foodMapper) {
+        this.foodFinanceRedisService = foodFinanceRedisService;
         this.foodMapper = foodMapper;
     }
     /*
@@ -28,7 +31,7 @@ public class FoodServiceImpl implements FoodService {
     */
 
     @Override
-    public int insertFood(DayFoodDTO dto) {
+    public int insertFood(DayFoodDTO dto) { //todo redis
         //对象
         DayFood dayFood = foodDTOToEntity(dto);
         //校验
@@ -40,7 +43,7 @@ public class FoodServiceImpl implements FoodService {
         foodMapper.insertFood(dayFood);
         return 1;//执行成功标识
     }
-    //校验
+    //校验 todo redis
     private boolean isFoodExist(DayFood dayFood) {
         DayFood entityInMysql = foodMapper.selectFoodByUserIdAndDate(dayFood.getUserId(),dayFood.getDate());
         return entityInMysql != null && entityInMysql.getId() != null;
@@ -70,18 +73,27 @@ public class FoodServiceImpl implements FoodService {
         DayFoodPrice dayFoodPrice = priceDTOToEntity(dto);
         //校验
         if(isFoodPriceExist(dayFoodPrice)){
-            log.info("记录已存在");
+            log.info("FoodPrice记录已存在");
             return 0;//已存在标识
         }
         //数据库
         foodMapper.insertFoodMoney(dayFoodPrice);
-        log.info("记录已录入");
+        foodFinanceRedisService.save(dayFoodPrice);
+        log.info("FoodPrice记录已录入");
         return 1;//执行成功标识
     }
     //校验
     private boolean isFoodPriceExist(DayFoodPrice dayFoodPrice) {
+        DayFoodPrice entityInRedis = foodFinanceRedisService.select(dayFoodPrice.getUserId(), dayFoodPrice.getDate());
+        if (entityInRedis != null && entityInRedis.getId() != null){
+            return true;
+        }
         DayFoodPrice entityInMysql = foodMapper.selectFoodPriceByUserIdAndDate(dayFoodPrice.getUserId(), dayFoodPrice.getDate());
-        return entityInMysql != null && entityInMysql.getId() != null;
+        if (entityInMysql != null && entityInMysql.getId() != null){
+            foodFinanceRedisService.save(entityInMysql);
+            return true;
+        }
+        return false;
     }
     //对象
       private DayFoodPrice priceDTOToEntity(DayFoodPriceDTO dto){
@@ -121,16 +133,18 @@ public class FoodServiceImpl implements FoodService {
         }
         //数据库
         foodMapper.updateFoodMoney(dayFoodPrice);
+        foodFinanceRedisService.delete(dayFoodPrice.getUserId(), dayFoodPrice.getDate());
         log.info("记录已更新");
     }
 
+    //todo redis
     @Override
     public void updateFood(DayFoodDTO dto) {
         //对象
         DayFood dayFood = foodDTOToEntity(dto);
         //校验
-        if (!isFoodExist(dayFood)){
-            throw new UserExistedException("记录已存在");
+        if (!isFoodExist(dayFood)) {
+            throw new UserExistedException("记录不存在");
         }
         //数据库
         foodMapper.updateFood(dayFood);
