@@ -77,71 +77,142 @@ const handleRouter = (to)=>{
   .header{
     display: flex;
     justify-content: space-between;
+    align-items: center;
     position:fixed;
     height: 80px;
     width: 100%;
-    //不透明度
     opacity: 0.95;
     background-color: #FFF8E8;
     overflow: hidden;
     z-index: 999;
     border-radius: 0 0 40px 40px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12);
+    }
+
     .logo-box{
-      margin:10px 10px 10px 50px;
+      margin: 10px 10px 10px 50px;
       height: 60px;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+
+      &:hover {
+        transform: scale(1.05);
+      }
+
       img{
         height: 60px;
+        object-fit: contain;
       }
     }
+
+    .main{
+      ul{
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        height: 80px;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+
+        li{
+          position: relative;
+          margin: 0 25px;
+          padding: 10px 15px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          border-radius: 8px;
+
+          span {
+            font-size: 16px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            transition: color 0.3s ease;
+          }
+
+          &::after {
+            content: '';
+            position: absolute;
+            bottom: 5px;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background-color: #C3272B;
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+          }
+
+          &:hover {
+            background-color: rgba(195, 39, 43, 0.05);
+
+            span {
+              color: #C3272B;
+            }
+
+            &::after {
+              width: 70%;
+            }
+          }
+        }
+      }
+    }
+
     .user-box{
       display: flex;
+      align-items: center;
       height: 60px;
-      margin:10px 50px 10px 10px;
+      margin: 10px 50px 10px 10px;
       cursor: pointer;
       outline: none;
+      padding: 5px 10px;
+      border-radius: 30px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background-color: rgba(195, 39, 43, 0.05);
+        transform: translateY(-2px);
+      }
 
       &:focus {
         outline: none;
       }
 
       img{
-        height: 60px;
-        border-radius:30px;
+        height: 50px;
+        width: 50px;
+        border-radius: 50%;
         overflow: hidden;
+        object-fit: cover;
+        border: 2px solid #FFF8E8;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
       }
 
       .username{
-        margin-left: 10px;
-        font-size: 20px;
-        line-height: 60px;
-        //禁止用户选择
+        margin-left: 12px;
+        font-size: 18px;
+        font-weight: 500;
+        line-height: 1;
+        color: #333;
         user-select: none;
         -webkit-user-select: none;
         -moz-user-select: none;
         -ms-user-select: none;
+        transition: color 0.3s ease;
       }
-    }
-    .main{
-      ul{
-        display: flex;
-        flex-direction: row;
-        justify-content: center;
 
-        height: 80px;
-        line-height: 80px;
-        //禁止用户选择
-        user-select: none;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        li{
-          margin: 0 20px;
-          &:hover{
-            color: #C3272B;
-          }
-        }
-
+      &:hover .username {
+        color: #C3272B;
       }
     }
 
@@ -158,6 +229,27 @@ const handleRouter = (to)=>{
       }
     }
 
+    // 下拉菜单样式优化
+    :deep(.custom-dropdown) {
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      padding: 8px 0;
 
+      .el-dropdown-menu__item {
+        padding: 12px 20px;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background-color: rgba(195, 39, 43, 0.08);
+          color: #C3272B;
+        }
+
+        .el-icon {
+          margin-right: 8px;
+          font-size: 16px;
+        }
+      }
+    }
   }
 </style>
