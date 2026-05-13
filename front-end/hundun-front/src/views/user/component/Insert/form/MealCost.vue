@@ -243,7 +243,7 @@ const showWarning = (dto) => {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 8px 0;
+  padding: 8px 0 50px 0;
   margin-top: -20px;
 }
 

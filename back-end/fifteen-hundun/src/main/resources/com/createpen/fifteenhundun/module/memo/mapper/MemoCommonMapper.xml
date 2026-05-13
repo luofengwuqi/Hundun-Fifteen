@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.createpen.fifteenhundun.module.memo.mapper.MemoCommonMapper">
+
+    <!-- 插入普通备忘 -->
+    <insert id="insertMemoCommon" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_memo_common (user_id, begin_time, end_time, text, status, email, created_at, updated_at)
+        VALUES (#{userId}, #{beginTime}, #{endTime}, #{text}, #{status}, #{email}, NOW(), NOW())
+    </insert>
+
+    <!-- 根据ID删除普通备忘 -->
+    <delete id="deleteMemoCommonById">
+        DELETE FROM user_memo_common 
+        WHERE id = #{id} AND user_id = #{userId}
+    </delete>
+
+    <!-- 更新普通备忘 -->
+    <update id="updateMemoCommon">
+        UPDATE user_memo_common
+        SET begin_time = #{beginTime},
+            end_time = #{endTime},
+            text = #{text},
+            status = #{status},
+            email = #{email},
+            updated_at = NOW()
+        WHERE id = #{id} AND user_id = #{userId}
+    </update>
+
+    <!-- 根据ID查询普通备忘 -->
+    <select id="selectMemoCommonById" resultType="com.createpen.fifteenhundun.module.memo.pojo.Entity.MemoCommon">
+        SELECT * FROM user_memo_common WHERE id = #{id}
+    </select>
+
+    <!-- 根据用户ID查询所有普通备忘 -->
+    <select id="selectMemoCommonsByUserId" resultType="com.createpen.fifteenhundun.module.memo.pojo.Entity.MemoCommon">
+        SELECT * FROM user_memo_common 
+        WHERE user_id = #{userId} 
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 查询所有普通备忘 -->
+    <select id="selectAllMemoCommons" resultType="com.createpen.fifteenhundun.module.memo.pojo.Entity.MemoCommon">
+        SELECT * FROM user_memo_common 
+        ORDER BY created_at DESC
+    </select>
+
+</mapper>

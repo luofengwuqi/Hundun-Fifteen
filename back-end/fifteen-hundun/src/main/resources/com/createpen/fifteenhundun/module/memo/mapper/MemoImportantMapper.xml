@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.createpen.fifteenhundun.module.memo.mapper.MemoImportantMapper">
+
+    <!-- 插入重要备忘 -->
+    <insert id="insertMemoImportant" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_memo_important (user_id, text, created_at)
+        VALUES (#{userId}, #{text}, NOW())
+    </insert>
+
+    <!-- 根据ID删除重要备忘 -->
+    <delete id="deleteMemoImportantById">
+        DELETE FROM user_memo_important 
+        WHERE id = #{id} AND user_id = #{userId}
+    </delete>
+
+    <!-- 更新重要备忘 -->
+    <update id="updateMemoImportant">
+        UPDATE user_memo_important
+        SET text = #{text}
+        WHERE id = #{id} AND user_id = #{userId}
+    </update>
+
+    <!-- 根据ID查询重要备忘 -->
+    <select id="selectMemoImportantById" resultType="com.createpen.fifteenhundun.module.memo.pojo.Entity.MemoImportant">
+        SELECT * FROM user_memo_important WHERE id = #{id}
+    </select>
+
+    <!-- 根据用户ID查询所有重要备忘 -->
+    <select id="selectMemoImportantsByUserId" resultType="com.createpen.fifteenhundun.module.memo.pojo.Entity.MemoImportant">
+        SELECT * FROM user_memo_important 
+        WHERE user_id = #{userId} 
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 查询所有重要备忘 -->
+    <select id="selectAllMemoImportants" resultType="com.createpen.fifteenhundun.module.memo.pojo.Entity.MemoImportant">
+        SELECT * FROM user_memo_important 
+        ORDER BY created_at DESC
+    </select>
+
+</mapper>

@@ -4,6 +4,7 @@ import { useUserStore } from '@/stores/user'
 import WhatAteToday from './form/WhatAteToday.vue'
 import MealCost from './form/MealCost.vue'
 import FeatureDisabled from './form/FeatureDisabled.vue'
+import MemoCommon from './form/MemoCommon.vue'
 
 const userStore = useUserStore()
 onMounted( async () => {
@@ -108,6 +109,16 @@ const componentsToShow = computed(() => {
     // TODO: 添加对应的组件
     console.log('TODO: 添加今日感悟的组件')
   }
+  if (props.selectedActions.includes('备忘记录')) {
+    // 显示备忘录组件（如果未被隐藏且不在消失过程中）
+    if (!hiddenComponents.value.has('MemoCommon') && !disappearingComponents.value.has('MemoCommon')) {
+      components.push({
+        name: 'MemoCommon',
+        component: MemoCommon,
+        onHide: () => handleHideComponent('MemoCommon')
+      })
+    }
+  }
 
   return components
 })
@@ -192,6 +203,7 @@ watch(() => props.selectedActions, () => {
   gap: 20px;
   overflow-y: auto;
   align-content: flex-start;
+  align-items: flex-start; // 防止组件被拉伸到相同高度
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -212,15 +224,13 @@ watch(() => props.selectedActions, () => {
 }
 
 .component-item {
-  // 正方形组件，宽度自适应
+  // 组件宽度自适应，高度根据内容自动调整
   flex: 0 0 calc(33.333% - 14px);
-  aspect-ratio: 1 / 1;
   min-width: 250px;
 
-  // 让内部组件填满整个 li
+  // 让内部组件宽度填满，高度自适应
   > * {
     width: 100%;
-    height: 100%;
   }
 }
 
