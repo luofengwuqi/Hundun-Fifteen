@@ -26,18 +26,18 @@ const hideOverlay = () => {
   showOverlay.value = false
 }
 
-const goBack = () => {
+const goBack = async () => {
   const status = Number(userStore.userInfo.status)
   if(isNaN(status) || status === undefined){
-    router.replace('/login')
+    await router.replace('/login')
   }
   else if(status >= 2){
-    router.replace('/admin')
+    await router.replace('/admin')
   }
   else if(status < 2 && status > 0){
-    router.replace('/user')
+    await router.replace('/user')
   }else{
-    router.replace('/login')
+    await router.replace('/login')
   }
 }
 // 反馈表单数据
