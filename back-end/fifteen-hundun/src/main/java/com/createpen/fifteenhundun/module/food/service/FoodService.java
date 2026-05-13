@@ -9,4 +9,6 @@ public interface FoodService {
     Integer insertFoodMoney(DayFoodPriceDTO dayFoodPrice);
 
     void updateFoodMoney(DayFoodPriceDTO dto);
+
+    void updateFood(DayFoodDTO dto);
 }

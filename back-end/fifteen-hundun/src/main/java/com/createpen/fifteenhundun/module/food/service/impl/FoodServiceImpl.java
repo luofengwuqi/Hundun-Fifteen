@@ -124,5 +124,18 @@ public class FoodServiceImpl implements FoodService {
         log.info("记录已更新");
     }
 
+    @Override
+    public void updateFood(DayFoodDTO dto) {
+        //对象
+        DayFood dayFood = foodDTOToEntity(dto);
+        //校验
+        if (!isFoodExist(dayFood)){
+            throw new UserExistedException("记录已存在");
+        }
+        //数据库
+        foodMapper.updateFood(dayFood);
+
+    }
+
 
 }

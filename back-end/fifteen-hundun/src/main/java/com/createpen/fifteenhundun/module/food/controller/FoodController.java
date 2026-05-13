@@ -23,6 +23,12 @@ public class FoodController {
         Integer flag = foodService.insertFood(dto);
         return Result.success(flag);
     }
+    @PutMapping("/health")
+    public Result<Void> updateFood(@RequestBody DayFoodDTO dto) {
+        log.info("updateFood");
+        foodService.updateFood(dto);
+        return Result.success();
+    }
 
     //吃了多少钱
     @PostMapping("/finance")
@@ -33,7 +39,6 @@ public class FoodController {
         Integer flag = foodService.insertFoodMoney(dto);
         return Result.success(flag);
     }
-
     @PutMapping("/finance")
     public Result<Integer> updateFoodMoney(@RequestBody DayFoodPriceDTO dto) {
         log.info("updateMoney");
