@@ -1,6 +1,6 @@
 <script setup>
 // 首页组件 - 录入与翻找功能入口
-import { ref, onMounted, computed } from 'vue'
+import { ref,  computed } from 'vue'
 import { useRouter } from 'vue-router'
 import insertImage from '@/assets/img/user/home/insert.png'
 import selectImage from '@/assets/img/user/home/select.png'
@@ -17,12 +17,6 @@ const isAnimating = ref(false) // 控制动画状态
 
 //pinia
 const userStore = useUserStore()
-onMounted( async () => {
-  if(!userStore.userModelStatus){
-    await userStore.initUserModelStatus()
-    console.log(userStore.userModelStatus)
-  }
-})
 
 // 长按充能相关状态
 const chargingBoxId = ref(null) // 当前正在充能的盒子ID
@@ -120,7 +114,11 @@ const handleCategoryClick = (category) => {
 
   // 只有启用的盒子才能点击跳转
   if (category.enabled && category.path) {
-    router.push(category.path)
+    // 使用 query 参数传递分类
+    router.push({
+      path: '/user/select',
+      query: { category: category.statusKey }
+    })
   }
 }
 

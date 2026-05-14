@@ -1,6 +1,16 @@
 <script setup>
 
 import HundunHeader from '@/views/user/component/common/HundunHeader.vue'
+import { onMounted } from 'vue'
+import { useUserStore } from '@/stores/user.js'
+
+const userStore = useUserStore()
+onMounted( async () => {
+  if(!userStore.userModelStatus){
+    await userStore.initUserModelStatus()
+    console.log(userStore.userModelStatus)
+  }
+})
 </script>
 
 <template>

@@ -19,13 +19,7 @@ const router = createRouter({
         { path:'insert', component:()=>import('@/views/user/component/Insert/Insert.vue')},
         {
           path:'select',
-          redirect:'/user/select/health',
-          children:[
-            { path:'health', component:()=>import('@/views/user/component/Select/component/HealthSelect.vue')},
-            { path:'finance', component:()=>import('@/views/user/component/Select/component/FinanceSelect.vue')},
-            { path:'knowledge', component:()=>import('@/views/user/component/Select/component/KnowledgeSelect.vue')},
-            { path:'memo', component:()=>import('@/views/user/component/Select/component/MemoSelect.vue')}
-          ]
+          component:()=>import('@/views/user/component/Select/Select.vue')
         }
       ]
     },
