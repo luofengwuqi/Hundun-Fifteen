@@ -21,10 +21,10 @@ const router = createRouter({
           path:'select',
           redirect:'/user/select/health',
           children:[
-            { path:'health', component:()=>import('@/views/user/component/Select/HealthSelect.vue')},
-            { path:'finance', component:()=>import('@/views/user/component/Select/FinanceSelect.vue')},
-            { path:'knowledge', component:()=>import('@/views/user/component/Select/KnowledgeSelect.vue')},
-            { path:'memo', component:()=>import('@/views/user/component/Select/MemoSelect.vue')}
+            { path:'health', component:()=>import('@/views/user/component/Select/component/HealthSelect.vue')},
+            { path:'finance', component:()=>import('@/views/user/component/Select/component/FinanceSelect.vue')},
+            { path:'knowledge', component:()=>import('@/views/user/component/Select/component/KnowledgeSelect.vue')},
+            { path:'memo', component:()=>import('@/views/user/component/Select/component/MemoSelect.vue')}
           ]
         }
       ]

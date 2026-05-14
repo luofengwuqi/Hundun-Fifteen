@@ -24,13 +24,6 @@ const errors = reactive({
   text: ''
 })
 
-// 验证时间格式
-const validateDateTime = (datetime) => {
-  if (!datetime) return false
-  const pattern = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/
-  return pattern.test(datetime)
-}
-
 // 验证单个字段
 const validateField = (field, value) => {
   if (field === 'text') {
@@ -49,10 +42,6 @@ const validateField = (field, value) => {
   if (field === 'beginTime' || field === 'endTime') {
     if (!value) {
       errors[field] = '时间不能为空'
-      return false
-    }
-    if (!validateDateTime(value)) {
-      errors[field] = '时间格式错误 (YYYY-MM-DD HH:mm)'
       return false
     }
     errors[field] = ''
@@ -81,8 +70,8 @@ const validateAll = () => {
 
   // 验证结束时间不能早于开始时间
   if (memoForm.beginTime && memoForm.endTime) {
-    const begin = new Date(memoForm.beginTime.replace(/-/g, '/'))
-    const end = new Date(memoForm.endTime.replace(/-/g, '/'))
+    const begin = new Date(memoForm.beginTime)
+    const end = new Date(memoForm.endTime)
     if (end <= begin) {
       errors.endTime = '结束时间必须晚于开始时间'
       isValid = false
@@ -135,44 +124,49 @@ const statusText = computed(() => {
 <template>
   <div class="memo-common">
     <div class="card-header">
-      <h3 class="card-title">新建备忘录(｡•̀ᴗ-)✧</h3>
+      <h3 class="card-title">整点计划(｡•̀ᴗ-)✧</h3>
     </div>
     <div class="card-content">
       <div class="memo-form">
-        <!-- 开始时间 -->
-        <div class="form-item">
-          <label class="form-label" for="beginTime">
-            <span class="form-icon">⏰</span>
-            <span class="form-name">开始时间</span>
-          </label>
-          <input
-            id="beginTime"
-            v-model="memoForm.beginTime"
-            @input="handleInput('beginTime')"
-            type="text"
-            placeholder="YYYY-MM-DD HH:mm"
-            class="form-input"
-            :class="{ 'has-error': errors.beginTime }"
-          />
-          <span v-if="errors.beginTime" class="error-message">{{ errors.beginTime }}</span>
-        </div>
+        <!-- 时间选择行 -->
+        <div class="time-row">
+          <!-- 开始时间 -->
+          <div class="time-item">
+            <label class="form-label">
+              <span class="form-icon">⏰</span>
+              <span class="form-name">开始时间</span>
+            </label>
+            <el-date-picker
+              v-model="memoForm.beginTime"
+              @change="handleInput('beginTime')"
+              type="datetime"
+              placeholder="选择开始时间"
+              format="YYYY-MM-DD HH:mm"
+              value-format="YYYY-MM-DD HH:mm"
+              class="form-input date-picker"
+              :class="{ 'has-error': errors.beginTime }"
+            />
+            <span v-if="errors.beginTime" class="error-message">{{ errors.beginTime }}</span>
+          </div>
 
-        <!-- 结束时间 -->
-        <div class="form-item">
-          <label class="form-label" for="endTime">
-            <span class="form-icon">⏰</span>
-            <span class="form-name">结束时间</span>
-          </label>
-          <input
-            id="endTime"
-            v-model="memoForm.endTime"
-            @input="handleInput('endTime')"
-            type="text"
-            placeholder="YYYY-MM-DD HH:mm"
-            class="form-input"
-            :class="{ 'has-error': errors.endTime }"
-          />
-          <span v-if="errors.endTime" class="error-message">{{ errors.endTime }}</span>
+          <!-- 结束时间 -->
+          <div class="time-item">
+            <label class="form-label">
+              <span class="form-icon">⏰</span>
+              <span class="form-name">结束时间</span>
+            </label>
+            <el-date-picker
+              v-model="memoForm.endTime"
+              @change="handleInput('endTime')"
+              type="datetime"
+              placeholder="选择结束时间"
+              format="YYYY-MM-DD HH:mm"
+              value-format="YYYY-MM-DD HH:mm"
+              class="form-input date-picker"
+              :class="{ 'has-error': errors.endTime }"
+            />
+            <span v-if="errors.endTime" class="error-message">{{ errors.endTime }}</span>
+          </div>
         </div>
 
         <!-- 备忘内容 -->
@@ -261,6 +255,20 @@ const statusText = computed(() => {
   gap: 14px;
 }
 
+// 时间选择行
+.time-row {
+  display: flex;
+  gap: 12px;
+
+  .time-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+  }
+}
+
 .form-item {
   display: flex;
   flex-direction: column;
@@ -313,31 +321,58 @@ const statusText = computed(() => {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   outline: none;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+  &:hover {
+    border-color: #FFD4A8;
+    box-shadow: 0 2px 6px rgba(195, 39, 43, 0.08);
+  }
+
+  &:focus,
+  &.is-focus {
+    border-color: #C3272B;
+    box-shadow: 0 0 0 3px rgba(195, 39, 43, 0.1);
+    background: #FFFBF8;
+  }
+
+  &.has-error {
+    border-color: #E74C3C;
+    background: #FDEDEC;
+
+    &:focus,
+    &.is-focus {
+      box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+    }
+  }
 }
 
-.form-input::placeholder {
-  color: #AAA;
-  font-style: italic;
-}
+// 日期选择器样式
+:deep(.date-picker) {
+  width: 100%;
 
-.form-input:hover {
-  border-color: #FFD4A8;
-  box-shadow: 0 2px 6px rgba(195, 39, 43, 0.08);
-}
+  .el-input__wrapper {
+    padding: 8px 12px;
+    box-shadow: none;
+    border: 2px solid #FFEFD5;
+    border-radius: 8px;
+    background: #FFFFFF;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-.form-input:focus {
-  border-color: #C3272B;
-  box-shadow: 0 0 0 3px rgba(195, 39, 43, 0.1);
-  background: #FFFBF8;
-}
+    &:hover {
+      border-color: #FFD4A8;
+      box-shadow: 0 2px 6px rgba(195, 39, 43, 0.08);
+    }
 
-.form-input.has-error {
-  border-color: #E74C3C;
-  background: #FDEDEC;
-}
+    &.is-focus {
+      border-color: #C3272B;
+      box-shadow: 0 0 0 3px rgba(195, 39, 43, 0.1);
+      background: #FFFBF8;
+    }
+  }
 
-.form-input.has-error:focus {
-  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+  &.has-error .el-input__wrapper {
+    border-color: #E74C3C;
+    background: #FDEDEC;
+  }
 }
 
 .form-textarea {

@@ -41,7 +41,7 @@ const quickActions = [
   { label: '心情如何', icon: '💭' },
   { label: '遇到趣事', icon: '✨' },
   { label: '今日感悟', icon: '🌟' },
-  { label: '备忘记录', icon: '📝' }
+  { label: '整点计划', icon: '📝' }
 ]
 
 const handleQuickAction = (action) => {
