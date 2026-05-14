@@ -1,5 +1,7 @@
 <script setup>
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
+
+const route = useRoute()
 </script>
 
 <template>
@@ -7,7 +9,7 @@ import { RouterView } from 'vue-router'
     <!-- 路由过渡动画：使用作用域插槽 -->
     <router-view v-slot="{ Component }">
       <transition name="fade" mode="out-in">
-        <component :is="Component" />
+        <component :is="Component" :key="route.path" />
       </transition>
     </router-view>
   </div>
