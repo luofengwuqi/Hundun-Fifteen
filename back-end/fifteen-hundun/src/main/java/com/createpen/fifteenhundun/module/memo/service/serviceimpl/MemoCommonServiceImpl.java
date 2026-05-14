@@ -5,6 +5,8 @@ import com.createpen.fifteenhundun.module.memo.mapper.MemoCommonMapper;
 import com.createpen.fifteenhundun.module.memo.pojo.DTO.MemoCommonDTO;
 import com.createpen.fifteenhundun.module.memo.pojo.Entity.MemoCommon;
 import com.createpen.fifteenhundun.module.memo.service.MemoCommonService;
+import com.createpen.fifteenhundun.module.user.pojo.Entity.User;
+import com.createpen.fifteenhundun.module.user.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -15,21 +17,29 @@ import java.util.List;
 @Service
 @Slf4j
 public class MemoCommonServiceImpl implements MemoCommonService {
+
+    private final UserService userService;
     
     private final MemoCommonMapper memoCommonMapper;
     
-    public MemoCommonServiceImpl(MemoCommonMapper memoCommonMapper) {
+    public MemoCommonServiceImpl(MemoCommonMapper memoCommonMapper, UserService userService) {
         this.memoCommonMapper = memoCommonMapper;
+        this.userService = userService;
     }
     
     @Override
     @Transactional
     public void insertMemoCommon(MemoCommonDTO dto) {
         log.info("创建普通备忘, userId: {}", BaseContext.getCurrentId());
-        
+        //对象
+        Long userId = BaseContext.getCurrentId();
         MemoCommon memoCommon = new MemoCommon();
         BeanUtils.copyProperties(dto, memoCommon);
-        memoCommon.setUserId(BaseContext.getCurrentId());
+        memoCommon.setUserId(userId);
+        if(dto.getStatus() == 1){
+            User user = userService.selectUserById(userId);
+            memoCommon.setEmail(user.getEmail());
+        }
         
         memoCommonMapper.insertMemoCommon(memoCommon);
         log.info("普通备忘创建成功, id: {}", memoCommon.getId());

@@ -17,7 +17,7 @@ public class MemoCommon implements Serializable {
     private LocalDateTime beginTime;
     private LocalDateTime endTime;
     private String text;
-    private Integer status; // 0:关闭邮件通知, 1:开启邮件通知
+    private Integer status; // 0:关闭邮件通知, 1:开启邮件通知 ,2:已经完成通知
     private String email;
     private LocalDate createdAt;
     private LocalDate updatedAt;
