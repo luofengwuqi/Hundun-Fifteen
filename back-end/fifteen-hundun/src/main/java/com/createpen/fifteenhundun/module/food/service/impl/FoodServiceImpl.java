@@ -11,7 +11,6 @@ import com.createpen.fifteenhundun.module.food.pojo.Entity.DayFood;
 import com.createpen.fifteenhundun.module.food.pojo.Entity.DayFoodPrice;
 import com.createpen.fifteenhundun.module.food.service.FoodService;
 import com.createpen.fifteenhundun.module.selecter.pojo.vo.FinanceDetailVo;
-import com.createpen.fifteenhundun.module.selecter.pojo.vo.FinanceVo;
 import com.createpen.fifteenhundun.module.selecter.provider.FinanceProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,11 +24,7 @@ import java.util.Map;
 @Slf4j
 @Service
 public class FoodServiceImpl implements FoodService, FinanceProvider {
-    @Override
-    public FinanceVo getFinanceSingleData() {
-        return null;
-    }
-    //辅助方法:对象转换
+
 
     @Override
     public FinanceDetailVo getFinanceDetailData(LocalDate date) {
