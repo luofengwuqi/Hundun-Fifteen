@@ -29,6 +29,13 @@ public class FoodFinanceRedisService {
         Integer expire = RedisExpireTimeUtil.getRandomTime(FOOD_FINANCE_EXPIRE);//解决失效雪崩
         redisTemplate.opsForValue().set(key, dayFoodPrice, expire , TimeUnit.SECONDS);
     }
+    //防止穿透
+    public void saveEmpty(Long userId, LocalDate date){
+        String key = buildKey(userId, date);
+        DayFoodPrice dayFoodPrice = new DayFoodPrice();
+        dayFoodPrice.setId(-1L);
+        redisTemplate.opsForValue().set(key, dayFoodPrice , RedisExpireTimeUtil.getRandomTime(FOOD_FINANCE_EXPIRE), TimeUnit.SECONDS);
+    }
     
     /**
      * 从 Redis 删除每日饮食费用

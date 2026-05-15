@@ -10,16 +10,69 @@ import com.createpen.fifteenhundun.module.food.pojo.DTO.DayFoodPriceDTO;
 import com.createpen.fifteenhundun.module.food.pojo.Entity.DayFood;
 import com.createpen.fifteenhundun.module.food.pojo.Entity.DayFoodPrice;
 import com.createpen.fifteenhundun.module.food.service.FoodService;
+import com.createpen.fifteenhundun.module.selecter.pojo.vo.FinanceDetailVo;
+import com.createpen.fifteenhundun.module.selecter.provider.FinanceProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Slf4j
 @Service
-public class FoodServiceImpl implements FoodService {
+public class FoodServiceImpl implements FoodService, FinanceProvider {
+    @Override
+    public FinanceDetailVo getFinanceData(LocalDate date) {
+        Long currentId = BaseContext.getCurrentId();
+        //查redis
+        DayFoodPrice entityInRedis = foodFinanceRedisService.select(currentId,date);
+        if (entityInRedis != null && entityInRedis.getId() != null){
+            return dayFoodPriceToFinanceDetailVo(entityInRedis);
+        }
+        //查mysql
+        DayFoodPrice entityInMysql = foodMapper.selectFoodPriceByUserIdAndDate(currentId, date);
+        if (entityInMysql != null && entityInMysql.getId() != null){
+            foodFinanceRedisService.save(entityInMysql);
+            return dayFoodPriceToFinanceDetailVo(entityInMysql);
+        }
+        else{
+            //缓存空对象 防止穿透
+            foodFinanceRedisService.saveEmpty(currentId,date);
+            return null;
+        }
+    }
+    //辅助方法:对象转换
+
+    private FinanceDetailVo dayFoodPriceToFinanceDetailVo(DayFoodPrice entity){
+        if(entity == null){
+            return null;
+        }
+        FinanceDetailVo vo = new FinanceDetailVo();
+        //title
+        vo.setTitle("饮食");
+        //detail Map
+        Map<String,Integer>  dataMap = new LinkedHashMap<>();
+        if(entity.getMorningFoodPrice()!=null && entity.getMorningFoodPrice()>0){
+            dataMap.put("早餐",entity.getMorningFoodPrice());
+        }
+        if(entity.getAfternoonFoodPrice()!=null && entity.getAfternoonFoodPrice()>0){
+            dataMap.put("午餐",entity.getAfternoonFoodPrice());
+        }
+        if(entity.getEveningFoodPrice()!=null && entity.getEveningFoodPrice()>0){
+            dataMap.put("晚餐",entity.getEveningFoodPrice());
+        }
+        if(entity.getElseFoodPrice()!=null && entity.getElseFoodPrice()>0){
+            dataMap.put("其他",entity.getElseFoodPrice());
+        }
+        vo.setDataMap(dataMap);
+        return vo;
+
+    }
+
+
     private final FoodFinanceRedisService foodFinanceRedisService;
     private final FoodHealthRedisService foodHealthRedisService;
     private final FoodMapper foodMapper;
