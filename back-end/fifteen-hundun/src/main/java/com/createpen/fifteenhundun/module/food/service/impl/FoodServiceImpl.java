@@ -11,6 +11,7 @@ import com.createpen.fifteenhundun.module.food.pojo.Entity.DayFood;
 import com.createpen.fifteenhundun.module.food.pojo.Entity.DayFoodPrice;
 import com.createpen.fifteenhundun.module.food.service.FoodService;
 import com.createpen.fifteenhundun.module.selecter.pojo.vo.FinanceDetailVo;
+import com.createpen.fifteenhundun.module.selecter.pojo.vo.FinanceVo;
 import com.createpen.fifteenhundun.module.selecter.provider.FinanceProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,24 +26,21 @@ import java.util.Map;
 @Service
 public class FoodServiceImpl implements FoodService, FinanceProvider {
     @Override
-    public FinanceDetailVo getFinanceData(LocalDate date) {
+    public FinanceVo getFinanceSingleData() {
+        return null;
+    }
+    //辅助方法:对象转换
+
+    @Override
+    public FinanceDetailVo getFinanceDetailData(LocalDate date) {
         Long currentId = BaseContext.getCurrentId();
-        //查redis
-        DayFoodPrice entityInRedis = foodFinanceRedisService.select(currentId,date);
-        if (entityInRedis != null && entityInRedis.getId() != null){
-            return dayFoodPriceToFinanceDetailVo(entityInRedis);
-        }
-        //查mysql
-        DayFoodPrice entityInMysql = foodMapper.selectFoodPriceByUserIdAndDate(currentId, date);
-        if (entityInMysql != null && entityInMysql.getId() != null){
-            foodFinanceRedisService.save(entityInMysql);
-            return dayFoodPriceToFinanceDetailVo(entityInMysql);
-        }
-        else{
+        DayFoodPrice entity = getDayFoodPriceByUserIdAndDate(currentId, date);
+        if(entity==null||entity.getId()==null){
             //缓存空对象 防止穿透
             foodFinanceRedisService.saveEmpty(currentId,date);
             return null;
         }
+        return dayFoodPriceToFinanceDetailVo(entity);
     }
     //辅助方法:对象转换
 
@@ -157,16 +155,20 @@ public class FoodServiceImpl implements FoodService, FinanceProvider {
     }
     //校验
     private boolean isFoodPriceExist(DayFoodPrice dayFoodPrice) {
-        DayFoodPrice entityInRedis = foodFinanceRedisService.select(dayFoodPrice.getUserId(), dayFoodPrice.getDate());
+        DayFoodPrice entity = getDayFoodPriceByUserIdAndDate(dayFoodPrice.getUserId(), dayFoodPrice.getDate());
+        return entity != null && entity.getId() != null;
+    }
+    public DayFoodPrice getDayFoodPriceByUserIdAndDate(Long userId, LocalDate date){
+        DayFoodPrice entityInRedis = foodFinanceRedisService.select(userId, date);
         if (entityInRedis != null && entityInRedis.getId() != null){
-            return true;
+            return entityInRedis;
         }
-        DayFoodPrice entityInMysql = foodMapper.selectFoodPriceByUserIdAndDate(dayFoodPrice.getUserId(), dayFoodPrice.getDate());
+        DayFoodPrice entityInMysql = foodMapper.selectFoodPriceByUserIdAndDate(userId, date);
         if (entityInMysql != null && entityInMysql.getId() != null){
             foodFinanceRedisService.save(entityInMysql);
-            return true;
+            return entityInMysql;
         }
-        return false;
+        return null;
     }
     //对象
       private DayFoodPrice priceDTOToEntity(DayFoodPriceDTO dto){

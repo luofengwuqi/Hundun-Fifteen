@@ -29,7 +29,7 @@ public class FinanceDataServiceImpl implements FinanceDataService {
     public Result<List<FinanceDetailVo>> getFinanceData(LocalDate date) {
         List<FinanceDetailVo> list = new ArrayList<>();
         for (FinanceProvider provider : providers) {
-            FinanceDetailVo financeData = provider.getFinanceData(date);
+            FinanceDetailVo financeData = provider.getFinanceDetailData(date);
             list.add(financeData);
         }
         return Result.success(list);
