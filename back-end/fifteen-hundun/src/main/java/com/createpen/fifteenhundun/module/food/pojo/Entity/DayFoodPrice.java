@@ -18,4 +18,5 @@ public class DayFoodPrice implements Serializable {
     private Integer afternoonFoodPrice;
     private Integer eveningFoodPrice;
     private Integer elseFoodPrice;
+    private Integer totalPrice;
 }

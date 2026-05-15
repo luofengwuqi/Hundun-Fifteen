@@ -189,6 +189,8 @@ public class FoodServiceImpl implements FoodService, FinanceProvider {
                   dto.getElseFoodPrice() != null ?
                           dto.getElseFoodPrice().multiply(BigDecimal.valueOf(100)).intValue() : 0
           );
+          Integer totalPrice = dayFoodPrice.getMorningFoodPrice() + dayFoodPrice.getAfternoonFoodPrice() + dayFoodPrice.getEveningFoodPrice() + dayFoodPrice.getElseFoodPrice();
+          dayFoodPrice.setTotalPrice(totalPrice);
         return dayFoodPrice;
       }
     /*
