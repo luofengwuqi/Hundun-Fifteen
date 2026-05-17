@@ -1,6 +1,7 @@
 
 package com.createpen.fifteenhundun.module.food.pojo.Entity;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,6 +11,8 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+
+@TableName("user_food_finance")
 public class DayFoodPrice implements Serializable {
     private Long id;
     private Long userId;

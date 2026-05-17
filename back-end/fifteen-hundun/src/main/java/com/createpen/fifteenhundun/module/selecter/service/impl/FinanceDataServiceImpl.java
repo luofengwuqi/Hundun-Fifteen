@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class FinanceDataServiceImpl implements FinanceDataService {
@@ -22,8 +24,31 @@ public class FinanceDataServiceImpl implements FinanceDataService {
 
     @Override
     public Result<List<FinanceVo>> getSingleFinanceData() {
-        //这个方法的sql非常复杂
-        return null;
+        // 总Map：保持插入顺序 + 存储最终 日期-总花费
+        Map<LocalDate, Integer> totalMap = new LinkedHashMap<>();
+
+        // 遍历所有模块（food、buy、travel...）
+        for (FinanceProvider provider : providers) {
+            // 获取单个模块的日期花费
+            Map<LocalDate, Integer> singleMap = provider.getFinanceSimpleData();
+            if (singleMap != null && !singleMap.isEmpty()) {
+                // 核心：合并到总Map，相同日期自动累加金额
+                singleMap.forEach((date, amount) -> 
+                    totalMap.merge(date, amount, Integer::sum)
+                );
+            }
+        }
+
+        // 转换为前端需要的 List<FinanceVo>
+        List<FinanceVo> voList = new ArrayList<>();
+        totalMap.forEach((date, total) -> {
+            FinanceVo vo = new FinanceVo();
+            vo.setDate(date);
+            vo.setTotalPrice(total);
+            voList.add(vo);
+        });
+
+        return Result.success(voList);
     }
 
     @Override

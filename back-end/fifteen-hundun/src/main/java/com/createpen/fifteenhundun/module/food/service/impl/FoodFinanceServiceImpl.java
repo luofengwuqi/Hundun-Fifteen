@@ -1,5 +1,6 @@
 package com.createpen.fifteenhundun.module.food.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.createpen.fifteenhundun.common.context.BaseContext;
 import com.createpen.fifteenhundun.common.exception.MyException.UserExistedException;
 import com.createpen.fifteenhundun.module.food.cache.FoodFinanceRedisService;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -114,10 +116,16 @@ public class FoodFinanceServiceImpl implements FoodFinanceService, FinanceProvid
     }
 
     @Override
-    public Map<String, Integer> getFinanceSimpleData() {
-        // TODO: 实现获取简单财务数据的逻辑getFinanceSimpleData
-
-        return Map.of();
+    public Map<LocalDate, Integer> getFinanceSimpleData() {
+        LambdaQueryWrapper<DayFoodPrice> wrapper = new LambdaQueryWrapper<DayFoodPrice>()
+                .select(DayFoodPrice::getDate, DayFoodPrice::getTotalPrice)
+                .eq(DayFoodPrice::getUserId, BaseContext.getCurrentId());
+        List<DayFoodPrice> list = foodFinanceMapper.selectList(wrapper);
+        Map<LocalDate, Integer> map = new LinkedHashMap<>();
+        for (DayFoodPrice entity : list) {
+            map.put(entity.getDate(), entity.getTotalPrice());
+        }
+        return map;
     }
 
     @Override

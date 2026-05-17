@@ -1,5 +1,6 @@
 package com.createpen.fifteenhundun.module.food.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.createpen.fifteenhundun.module.food.pojo.Entity.DayFoodPrice;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
@@ -9,7 +10,7 @@ import org.apache.ibatis.annotations.Update;
 import java.time.LocalDate;
 
 @Mapper
-public interface FoodFinanceMapper {
+public interface FoodFinanceMapper extends BaseMapper<DayFoodPrice> {
 
     @Insert("INSERT INTO user_food_finance(user_id, date, morning_food_price, afternoon_food_price, evening_food_price, else_food_price, total_price) " +
             "VALUES (#{userId}, #{date}, #{morningFoodPrice}, #{afternoonFoodPrice}, #{eveningFoodPrice}, #{elseFoodPrice}, #{totalPrice})")

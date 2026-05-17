@@ -10,5 +10,5 @@ public interface FinanceProvider {
     FinanceDetailVo getFinanceDetailData(LocalDate date);
 
     //String:date Integer:totalPrice(当日总花费)
-    Map<String,Integer> getFinanceSimpleData();
+    Map<LocalDate,Integer> getFinanceSimpleData();
 }
