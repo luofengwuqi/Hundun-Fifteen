@@ -65,12 +65,15 @@
 			<version>3.0.5</version>
 		</dependency>
 
+		<!-- DevTools temporarily disabled due to Spring Boot 3.5.x compatibility issue -->
+		<!--
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>
 			<scope>runtime</scope>
 			<optional>true</optional>
 		</dependency>
+		-->
 		<dependency>
 			<groupId>com.mysql</groupId>
 			<artifactId>mysql-connector-j</artifactId>
@@ -187,7 +190,13 @@
 		<artifactId>javax.mail</artifactId>
 		<version>1.6.2</version>
 	</dependency>
-
+<!--		mybatis-plus		-->
+	<!-- Spring Boot 3.x必须使用3.5.5及以上版本 -->
+	<dependency>
+		<groupId>com.baomidou</groupId>
+		<artifactId>mybatis-plus-boot-starter</artifactId>
+		<version>3.5.5</version>
+	</dependency>
     </dependencies>
 
 	<build>

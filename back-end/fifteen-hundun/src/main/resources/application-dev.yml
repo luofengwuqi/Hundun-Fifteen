@@ -18,6 +18,10 @@ fifteen-hundun:
     password:
     database: 0
     timeout: 10
+  # DevTools配置 - 禁用自动重启
+  devtools:
+    restart:
+      enabled: false
 
 # 服务器配置
 server:
