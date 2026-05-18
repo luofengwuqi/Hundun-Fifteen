@@ -20,6 +20,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.createpen.fifteenhundun.common.constant.finance.FinanceDetailConstant.FINANCE_TITLE_FOOD;
+
 @Slf4j
 @Service
 public class FoodFinanceServiceImpl implements FoodFinanceService, FinanceProvider {
@@ -147,7 +149,7 @@ public class FoodFinanceServiceImpl implements FoodFinanceService, FinanceProvid
         }
         FinanceDetailVo vo = new FinanceDetailVo();
         // title
-        vo.setTitle("饮食");
+        vo.setTitle(FINANCE_TITLE_FOOD);
         // detail Map
         Map<String, Integer> dataMap = new LinkedHashMap<>();
         if (entity.getMorningFoodPrice() != null && entity.getMorningFoodPrice() > 0) {
