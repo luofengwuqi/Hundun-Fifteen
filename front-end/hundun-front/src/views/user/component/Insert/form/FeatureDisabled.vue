@@ -36,7 +36,7 @@ const props = defineProps({
   text-align: center;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   border: 2px dashed #C3272B;
-  animation: fadeIn 0.5s ease-out;
+  animation: none;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -49,7 +49,7 @@ const props = defineProps({
   .emoji {
     font-size: 36px;
     display: inline-block;
-    animation: bounce 2s infinite;
+    animation: none;
   }
 }
 
@@ -68,23 +68,5 @@ const props = defineProps({
   line-height: 1.6;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
 
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
 </style>

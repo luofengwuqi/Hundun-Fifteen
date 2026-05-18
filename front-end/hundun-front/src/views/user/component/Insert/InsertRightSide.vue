@@ -247,20 +247,20 @@ watch(() => props.selectedActions, () => {
 
 // TransitionGroup 列表过渡动画
 .component-fade-enter-active {
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: none;
 }
 
 .component-fade-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: none;
 }
 
 .component-fade-enter-from {
-  opacity: 0;
-  transform: scale(0.8) translateY(20px);
+  opacity: 1;
+  transform: scale(1) translateY(0);
 }
 
 .component-fade-leave-to {
-  opacity: 0;
-  transform: scale(0.85) translateY(-15px);
+  opacity: 1;
+  transform: scale(1) translateY(0);
 }
 </style>

@@ -210,15 +210,11 @@ const showWarning = (dto) => {
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: none;
   display: flex;
   flex-direction: column;
   position: relative;
 
-  &:hover {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px);
-  }
 }
 
 .card-header {
@@ -269,7 +265,7 @@ const showWarning = (dto) => {
   font-weight: 600;
   color: #5A4A42;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: none;
 }
 
 .meal-label:hover {
@@ -279,12 +275,10 @@ const showWarning = (dto) => {
 .meal-icon {
   font-size: 16px;
   filter: grayscale(0.2);
-  transition: transform 0.2s ease;
+  transition: none;
 }
 
-.meal-label:hover .meal-icon {
-  transform: scale(1.15) rotate(-5deg);
-}
+
 
 .meal-name {
   letter-spacing: 0.5px;
@@ -299,7 +293,7 @@ const showWarning = (dto) => {
   font-size: 14px;
   font-family: inherit;
   color: #333333;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: none;
   outline: none;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
@@ -309,43 +303,25 @@ const showWarning = (dto) => {
   font-style: italic;
 }
 
-.meal-input:hover {
-  border-color: #FFD4A8;
-  box-shadow: 0 2px 6px rgba(195, 39, 43, 0.08);
-}
 
-.meal-input:focus {
-  border-color: #C3272B;
-  box-shadow: 0 0 0 3px rgba(195, 39, 43, 0.1);
-  background: #FFFBF8;
-}
+
+
 
 .meal-input.has-error {
   border-color: #E74C3C;
   background: #FDEDEC;
 }
 
-.meal-input.has-error:focus {
-  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
-}
+
 
 .error-message {
   font-size: 11px;
   color: #E74C3C;
   margin-top: -2px;
-  animation: slideDown 0.2s ease;
+  animation: none;
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+
 
 .cancel-button {
   position: absolute;
@@ -358,12 +334,7 @@ const showWarning = (dto) => {
   border-radius: 6px;
   font-size: 12px;
   cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: #E8E8E8;
-    border-color: #CCC;
-  }
+  transition: none;
 }
 
 .ok-button {
@@ -378,17 +349,7 @@ const showWarning = (dto) => {
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: none;
   box-shadow: 0 2px 8px rgba(195, 39, 43, 0.3);
-
-  &:hover {
-    background: #A82025;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(195, 39, 43, 0.4);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
 }
 </style>
