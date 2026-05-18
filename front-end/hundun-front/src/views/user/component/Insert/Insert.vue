@@ -28,6 +28,24 @@ const handleHideComponent = (componentName) => {
     selectedActions.value = [...newActions]
     hiddenComponents.value.clear()
   }
+  
+  // 检查是否是 MemoCommon 组件被隐藏
+  if (componentName === 'MemoCommon') {
+    console.log('MemoCommon hidden, clearing selection')
+    // 从选中列表中移除"整点计划"
+    const newActions = selectedActions.value.filter(action => action !== '整点计划')
+    selectedActions.value = [...newActions]
+    hiddenComponents.value.clear()
+  }
+  
+  // 检查是否是 Payment 组件被隐藏
+  if (componentName === 'Payment') {
+    console.log('Payment hidden, clearing selection')
+    // 从选中列表中移除"买了点啥"
+    const newActions = selectedActions.value.filter(action => action !== '买了点啥')
+    selectedActions.value = [...newActions]
+    hiddenComponents.value.clear()
+  }
 }
 </script>
 

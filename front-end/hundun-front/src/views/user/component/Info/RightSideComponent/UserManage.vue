@@ -386,11 +386,10 @@ onUnmounted(() => {
 </template>
 
 <style scoped lang="less">
-@import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+KuaiLe&family=Caveat:wght@400;600;700&family=Indie+Flower&display=swap');
-
+// 使用系统默认字体替代 Google Fonts
 .user-manage {
   padding: 40px 30px;
-  font-family: 'Caveat', 'Indie Flower', 'Ma Shan Zheng', 'ZCOOL KuaiLe', cursive, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   position: relative;
   min-height: 84vh;
 
@@ -456,7 +455,7 @@ onUnmounted(() => {
       cursor: pointer;
       box-shadow: 0 4px 12px rgba(90, 74, 66, 0.3);
       transition: all 0.3s ease;
-      font-family: 'Caveat', 'Indie Flower', 'Ma Shan Zheng', 'ZCOOL KuaiLe', cursive, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 
       &:hover {
         transform: translateY(-2px) scale(1.05);
@@ -544,7 +543,7 @@ onUnmounted(() => {
 
       :deep(.el-input__inner) {
         font-size: 34px;
-        font-family: 'Caveat', 'Indie Flower', 'Ma Shan Zheng', 'ZCOOL KuaiLe', cursive, sans-serif;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         color: inherit;
         text-align: center;
       }
@@ -560,7 +559,7 @@ onUnmounted(() => {
           font-size: 24px;
           font-weight: 600;
           border-radius: 20px;
-          font-family: 'Caveat', 'Indie Flower', 'Ma Shan Zheng', 'ZCOOL KuaiLe', cursive, sans-serif;
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
           transition: all 0.3s ease;
           background: transparent;
           border: none;
@@ -675,6 +674,7 @@ onUnmounted(() => {
         font-weight: 600;
         letter-spacing: 2px;
         position: relative;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 
         &::after {
           content: '';
@@ -696,6 +696,7 @@ onUnmounted(() => {
         position: relative;
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.08);
         margin-left: 5px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 
         &::before {
           content: '→ ';
@@ -715,6 +716,7 @@ onUnmounted(() => {
       letter-spacing: 0.5px;
       position: relative;
       font-weight: 500;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 
       &::before {
         content: '✎ ';

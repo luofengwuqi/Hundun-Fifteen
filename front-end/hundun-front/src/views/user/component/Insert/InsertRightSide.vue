@@ -5,6 +5,7 @@ import WhatAteToday from './form/WhatAteToday.vue'
 import MealCost from './form/MealCost.vue'
 import FeatureDisabled from './form/FeatureDisabled.vue'
 import MemoCommon from './form/MemoCommon.vue'
+import Payment from './form/Payment.vue'
 
 const userStore = useUserStore()
 onMounted( async () => {
@@ -93,6 +94,16 @@ const componentsToShow = computed(() => {
     // TODO: 添加对应的组件
     console.log('TODO: 添加去了哪里的组件')
   }
+  if (props.selectedActions.includes('买了点啥')) {
+    // 显示购物记录组件（如果未被隐藏且不在消失过程中）
+    if (!hiddenComponents.value.has('Payment') && !disappearingComponents.value.has('Payment')) {
+      components.push({
+        name: 'Payment',
+        component: Payment,
+        onHide: () => handleHideComponent('Payment')
+      })
+    }
+  }
   if (props.selectedActions.includes('睡得咋样')) {
     // TODO: 添加对应的组件
     console.log('TODO: 添加睡得咋样的组件')
@@ -109,7 +120,7 @@ const componentsToShow = computed(() => {
     // TODO: 添加对应的组件
     console.log('TODO: 添加今日感悟的组件')
   }
-  if (props.selectedActions.includes('备忘记录')) {
+  if (props.selectedActions.includes('整点计划')) {
     // 显示备忘录组件（如果未被隐藏且不在消失过程中）
     if (!hiddenComponents.value.has('MemoCommon') && !disappearingComponents.value.has('MemoCommon')) {
       components.push({

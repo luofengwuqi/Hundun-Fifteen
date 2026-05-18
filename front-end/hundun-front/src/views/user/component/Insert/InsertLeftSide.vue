@@ -37,6 +37,7 @@ const username = computed(() => {
 const quickActions = [
   { label: '吃了什么', icon: '🍜' },
   { label: '去了哪里', icon: '📍' },
+  { label: '买了点啥', icon: '🛒' },
   { label: '睡得咋样', icon: '😴' },
   { label: '心情如何', icon: '💭' },
   { label: '遇到趣事', icon: '✨' },
