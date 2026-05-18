@@ -205,7 +205,6 @@ const showWarning = (dto) => {
 <style scoped lang="less">
 .what-ate-today {
   width: 100%;
-  height: 100%;
   background: #FFFFFF;
   border-radius: 12px;
   padding: 16px;
@@ -233,13 +232,8 @@ const showWarning = (dto) => {
 }
 
 .card-content {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  flex: 0 1 auto;
   padding: 8px 0 50px 0;
-  margin-top: -20px;
 }
 
 .meal-form {
