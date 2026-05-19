@@ -1,7 +1,7 @@
 package com.createpen.fifteenhundun.common.constant.finance;
 
 public class FinanceDetailConstant {
-    /*
+    /*  给时间线标题用的
         FinanceDetailVo
         private String title;
         private Map<String,Integer> dataMap;

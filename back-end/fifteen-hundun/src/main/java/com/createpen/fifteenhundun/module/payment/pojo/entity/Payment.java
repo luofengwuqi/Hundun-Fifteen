@@ -21,4 +21,5 @@ public class Payment implements Serializable {
     private LocalDate date;
     private String name;
     private Integer price;
+    private Integer type;
 }

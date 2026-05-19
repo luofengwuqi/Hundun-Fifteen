@@ -3,12 +3,13 @@ package com.createpen.fifteenhundun.module.payment.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.createpen.fifteenhundun.common.context.BaseContext;
 import com.createpen.fifteenhundun.module.payment.mapper.PaymentMapper;
+import com.createpen.fifteenhundun.module.payment.pojo.dto.PaymentDto;
 import com.createpen.fifteenhundun.module.payment.pojo.entity.Payment;
 import com.createpen.fifteenhundun.module.payment.service.PaymentService;
 import com.createpen.fifteenhundun.module.selecter.pojo.vo.FinanceDetailVo;
 import com.createpen.fifteenhundun.module.selecter.provider.FinanceProvider;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -17,12 +18,17 @@ import java.util.List;
 import java.util.Map;
 
 import static com.createpen.fifteenhundun.common.constant.finance.FinanceDetailConstant.FINANCE_TITLE_PAYMENT;
+import static com.createpen.fifteenhundun.common.constant.finance.PaymentTypeConstant.PAYMENT_TYPE_UNKNOWN;
 
 @Slf4j
 @Service
 public class PaymentServiceImpl implements PaymentService,  FinanceProvider {
-    @Autowired
-    private PaymentMapper paymentMapper;
+    private final PaymentMapper paymentMapper;
+
+    public PaymentServiceImpl(PaymentMapper paymentMapper) {
+        this.paymentMapper = paymentMapper;
+    }
+
     /*
         FinanceProvider
     */
@@ -70,4 +76,16 @@ public class PaymentServiceImpl implements PaymentService,  FinanceProvider {
     }
 
 
+    @Override
+    public void savePayment(PaymentDto dto) {
+        Payment payment = new Payment();
+        BeanUtils.copyProperties(dto,payment);
+        if (payment.getType()==null){
+            payment.setType(PAYMENT_TYPE_UNKNOWN);
+        }
+        payment.setUserId(BaseContext.getCurrentId());
+        payment.setDate(LocalDate.now());
+        log.info("保存payment: {}",payment);
+        paymentMapper.insert(payment);
+    }
 }
