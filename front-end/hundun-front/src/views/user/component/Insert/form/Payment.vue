@@ -213,15 +213,11 @@ const handleOK = async () => {
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: none;
   display: flex;
   flex-direction: column;
   position: relative;
 
-  &:hover {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px);
-  }
 }
 
 .card-header {
@@ -275,11 +271,8 @@ const handleOK = async () => {
   background: #FFFFFF;
   border-radius: 8px;
   border: 2px solid #FFEFD5;
-  transition: all 0.3s ease;
+  transition: none;
 
-  &:hover {
-    border-color: #FFD4A8;
-  }
 }
 
 .item-controls {
@@ -299,7 +292,7 @@ const handleOK = async () => {
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -310,31 +303,12 @@ const handleOK = async () => {
     color: #FFFFFF;
     box-shadow: 0 2px 6px rgba(195, 39, 43, 0.3);
 
-    &:hover {
-      background: #A82025;
-      transform: scale(1.1);
-      box-shadow: 0 3px 10px rgba(195, 39, 43, 0.4);
-    }
-
-    &:active {
-      transform: scale(0.95);
-    }
   }
 
   &.remove-btn {
     background: #F5F5F5;
     color: #666;
     border: 1px solid #DDD;
-
-    &:hover:not(:disabled) {
-      background: #E8E8E8;
-      border-color: #CCC;
-      transform: scale(1.1);
-    }
-
-    &:active:not(:disabled) {
-      transform: scale(0.95);
-    }
 
     &:disabled {
       opacity: 0.4;
@@ -368,7 +342,7 @@ const handleOK = async () => {
   font-weight: 600;
   color: #5A4A42;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: none;
 }
 
 .form-label:hover {
@@ -378,12 +352,10 @@ const handleOK = async () => {
 .form-icon {
   font-size: 16px;
   filter: grayscale(0.2);
-  transition: transform 0.2s ease;
+  transition: none;
 }
 
-.form-label:hover .form-icon {
-  transform: scale(1.15) rotate(-5deg);
-}
+
 
 .form-name {
   letter-spacing: 0.5px;
@@ -398,29 +370,10 @@ const handleOK = async () => {
   font-size: 14px;
   font-family: inherit;
   color: #333333;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: none;
   outline: none;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 
-  &:hover {
-    border-color: #FFD4A8;
-    box-shadow: 0 2px 6px rgba(195, 39, 43, 0.08);
-  }
-
-  &:focus {
-    border-color: #C3272B;
-    box-shadow: 0 0 0 3px rgba(195, 39, 43, 0.1);
-    background: #FFFBF8;
-  }
-
-  &.has-error {
-    border-color: #E74C3C;
-    background: #FDEDEC;
-
-    &:focus {
-      box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
-    }
-  }
 }
 
 .form-input::placeholder {
@@ -432,19 +385,10 @@ const handleOK = async () => {
   font-size: 11px;
   color: #E74C3C;
   margin-top: -2px;
-  animation: slideDown 0.2s ease;
+  animation: none;
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+
 
 .cancel-button {
   position: absolute;
@@ -457,12 +401,7 @@ const handleOK = async () => {
   border-radius: 6px;
   font-size: 12px;
   cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: #E8E8E8;
-    border-color: #CCC;
-  }
+  transition: none;
 }
 
 .ok-button {
@@ -477,17 +416,7 @@ const handleOK = async () => {
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: none;
   box-shadow: 0 2px 8px rgba(195, 39, 43, 0.3);
-
-  &:hover {
-    background: #A82025;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(195, 39, 43, 0.4);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
 }
 </style>
