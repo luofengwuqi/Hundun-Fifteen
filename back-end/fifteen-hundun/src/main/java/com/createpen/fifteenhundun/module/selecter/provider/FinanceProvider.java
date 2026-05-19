@@ -9,6 +9,6 @@ import java.util.Map;
 public interface FinanceProvider {
     FinanceDetailVo getFinanceDetailData(LocalDate date);
 
-    //String:date Integer:totalPrice(当日总花费)
+    //LocalDate:date Integer:totalPrice(当日总花费)
     Map<LocalDate,Integer> getFinanceSimpleData();
 }

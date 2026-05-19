@@ -35,15 +35,14 @@ public class PaymentServiceImpl implements PaymentService,  FinanceProvider {
                 .eq(Payment::getUserId,currentId)
                 .eq(Payment::getDate,date);
         List<Payment> paymentList = paymentMapper.selectList(wrapper);
-        log.error("paymentList:{}",paymentList);
         //封装对象
         FinanceDetailVo vo = new FinanceDetailVo();
         vo.setTitle(FINANCE_TITLE_PAYMENT);
-        vo.setDataMap(paymentListToMap(paymentList));
+        vo.setDataMap(paymentListToDetailMap(paymentList));
         return vo;
     }
     //辅助方法
-    private Map<String,Integer> paymentListToMap(List<Payment> paymentList){
+    private Map<String,Integer> paymentListToDetailMap(List<Payment> paymentList){
         Map<String,Integer> map = new LinkedHashMap<>();
         for(Payment payment:paymentList){
             String key = payment.getName();
@@ -55,6 +54,20 @@ public class PaymentServiceImpl implements PaymentService,  FinanceProvider {
 
     @Override
     public Map<LocalDate, Integer> getFinanceSimpleData() {
-        return Map.of();
+        //sql
+        Long currentId = BaseContext.getCurrentId();
+        List<Payment> financeSimpleData = paymentMapper.getFinanceSimpleData(currentId);
+        return paymentListToSimpleMap(financeSimpleData);
     }
+    private Map<LocalDate, Integer> paymentListToSimpleMap(List<Payment> paymentList) {
+        Map<LocalDate, Integer> map = new LinkedHashMap<>();
+        for(Payment payment:paymentList){
+            LocalDate date = payment.getDate();
+            Integer price = payment.getPrice();
+            map.put(date,price);
+        }
+        return map;
+    }
+
+
 }
