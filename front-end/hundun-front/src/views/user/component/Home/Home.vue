@@ -1,6 +1,6 @@
 <script setup>
 // 首页组件 - 录入与翻找功能入口
-import { ref,  computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import insertImage from '@/assets/img/user/home/insert.png'
 import selectImage from '@/assets/img/user/home/select.png'
@@ -17,6 +17,11 @@ const isAnimating = ref(false) // 控制动画状态
 
 //pinia
 const userStore = useUserStore()
+
+// 组件挂载时获取用户模型状态
+onMounted(() => {
+  userStore.initUserModelStatus()
+})
 
 // 长按充能相关状态
 const chargingBoxId = ref(null) // 当前正在充能的盒子ID

@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.createpen.fifteenhundun.module.payment.mapper.PaymentMapper">
+    <insert id="insertPaymentList">
+        insert into user_payment_finance(user_id,date,name,price,type)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.userId},#{item.date},#{item.name},#{item.price},#{item.type})
+        </foreach>
+    </insert>
     <select id="getFinanceSimpleData"
             resultType="com.createpen.fifteenhundun.module.payment.pojo.entity.Payment">
         Select date,sum(price) as price from user_payment_finance
