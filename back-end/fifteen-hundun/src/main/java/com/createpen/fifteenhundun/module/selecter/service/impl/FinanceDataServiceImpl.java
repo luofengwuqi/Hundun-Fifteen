@@ -87,13 +87,43 @@ public class FinanceDataServiceImpl implements FinanceDataService {
 
     @Override
     public Result<List<FinanceDetailVo>> getFinanceData(LocalDate date) {
-        List<FinanceDetailVo> list = new ArrayList<>();
-        for (FinanceProvider provider : providers) {
-            FinanceDetailVo financeData = provider.getFinanceDetailData(date);
-            if (financeData != null && !financeData.getDataMap().isEmpty()){
-                list.add(financeData);
+        Long currentId = BaseContext.getCurrentId();
+        //1,执行异步
+        List<CompletableFuture<FinanceDetailVo>> futures = new ArrayList<>();
+        for(FinanceProvider provider : providers){
+            CompletableFuture<FinanceDetailVo> future =
+                CompletableFuture.supplyAsync(()->{
+                    try{
+                        BaseContext.setCurrentId(currentId);
+                        return provider.getFinanceDetailData( date);
+                    }finally {
+                        BaseContext.clearAll();
+                    }
+                },financeExecutor);
+            futures.add(future);
+        }
+        //2.等待异步
+        CompletableFuture<?>[] arr = futures.toArray(new CompletableFuture[0]);
+        CompletableFuture.allOf(arr).join();
+        //3.处理结果
+        List<FinanceDetailVo> totalList = new ArrayList<>();
+        for (CompletableFuture<FinanceDetailVo> future : futures) {
+            FinanceDetailVo vo = future.join();
+            if (vo != null && !vo.getDataMap().isEmpty()) {
+                totalList.add(vo);
             }
         }
-        return Result.success(list);
+        return Result.success(totalList);
+
+
+//
+//        List<FinanceDetailVo> list = new ArrayList<>();
+//        for (FinanceProvider provider : providers) {
+//            FinanceDetailVo financeData = provider.getFinanceDetailData(date);
+//            if (financeData != null && !financeData.getDataMap().isEmpty()){
+//                list.add(financeData);
+//            }
+//        }
+//        return Result.success(list);
     }
 }
