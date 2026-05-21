@@ -38,7 +38,7 @@ public class PaymentServiceImpl implements PaymentService,  FinanceProvider {
         //查询数据库
         Long currentId = BaseContext.getCurrentId();
         LambdaQueryWrapper<Payment> wrapper = new LambdaQueryWrapper<>();
-        wrapper.select(Payment::getName,Payment::getPrice)
+        wrapper.select(Payment::getId,Payment::getName,Payment::getPrice)
                 .eq(Payment::getUserId,currentId)
                 .eq(Payment::getDate,date);
         List<Payment> paymentList = paymentMapper.selectList(wrapper);
@@ -54,6 +54,10 @@ public class PaymentServiceImpl implements PaymentService,  FinanceProvider {
         for(Payment payment:paymentList){
             String key = payment.getName();
             Integer value = payment.getPrice();
+            //校验是否有一样的 key
+            if(map.containsKey(key)){
+                key = key+"_"+payment.getId();
+            }
             map.put(key,value);
         }
         return map;

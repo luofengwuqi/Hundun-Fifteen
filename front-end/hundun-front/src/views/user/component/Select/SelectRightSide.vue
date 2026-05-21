@@ -48,7 +48,7 @@ const currentTitle = computed(() => {
     <!-- 动态组件展示区域 -->
     <div v-else class="content-area">
       <Transition name="fade-slide" mode="out-in">
-        <component :is="currentComponent" :key="selectedCategory" />
+        <component :is="currentComponent" :key="selectedCategory" class="select-panel" />
       </Transition>
     </div>
   </div>
@@ -58,9 +58,11 @@ const currentTitle = computed(() => {
 .right-side-container {
   width: 100%;
   height: 100%;
-  padding: 24px;
+  min-height: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
+  background: transparent;
 }
 
 .empty-state {
@@ -78,23 +80,21 @@ const currentTitle = computed(() => {
 
 .content-area {
   flex: 1;
-  overflow-y: auto;
-  
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.15);
-    border-radius: 3px;
-    
-    &:hover {
-      background: rgba(0, 0, 0, 0.25);
-    }
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  /* 子面板铺满，不在外层再套一层「卡片」 */
+  :deep(.select-panel),
+  :deep(.finance-select),
+  :deep(.health-select),
+  :deep(.memo-select),
+  :deep(.knowledge-select) {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
   }
 }
 

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useFinanceStore } from '@/stores/finance.js'
 
@@ -7,8 +7,64 @@ const financeStore = useFinanceStore()
 
 const categoryFilter = ref('all')
 const searchKeyword = ref('')
+const timelineFilter = ref('all')
+const dateRangeStart = ref('')
+const dateRangeEnd = ref('')
 
 const CATEGORY_ALL = 'all'
+
+const timelineFilterOptions = [
+  { value: 'all', label: '全部' },
+  { value: '7d', label: '近 7 天' },
+  { value: '30d', label: '近 30 天' },
+  { value: 'month', label: '本月' },
+  { value: 'custom', label: '自定义' }
+]
+
+const parseDate = (dateStr) => new Date(`${dateStr}T00:00:00`)
+
+const filteredTimeline = computed(() => {
+  const list = financeStore.timeline
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  return list.filter((day) => {
+    const d = parseDate(day.date)
+    if (Number.isNaN(d.getTime())) return false
+
+    switch (timelineFilter.value) {
+      case '7d': {
+        const start = new Date(today)
+        start.setDate(start.getDate() - 6)
+        return d >= start && d <= today
+      }
+      case '30d': {
+        const start = new Date(today)
+        start.setDate(start.getDate() - 29)
+        return d >= start && d <= today
+      }
+      case 'month':
+        return (
+          d.getFullYear() === today.getFullYear() &&
+          d.getMonth() === today.getMonth()
+        )
+      case 'custom': {
+        if (dateRangeStart.value && d < parseDate(dateRangeStart.value)) return false
+        if (dateRangeEnd.value && d > parseDate(dateRangeEnd.value)) return false
+        return true
+      }
+      default:
+        return true
+    }
+  })
+})
+
+watch([filteredTimeline, timelineFilter], () => {
+  const expanded = financeStore.expandedDate
+  if (!expanded) return
+  const visible = filteredTimeline.value.some((d) => d.date === expanded)
+  if (!visible) financeStore.collapseDetail()
+})
 const PRESET_CATEGORIES = ['饮食', '购物']
 
 const categoryOptions = computed(() => {
@@ -91,7 +147,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="finance-select">
+  <div class="finance-select select-panel">
     <!-- 左：时间轴树 -->
     <section class="axis-panel">
       <header class="axis-head">
@@ -100,15 +156,26 @@ onMounted(() => {
 
       <div v-if="financeStore.loadingTimeline" class="axis-state">加载中…</div>
 
-      <div v-else-if="financeStore.timeline.length === 0" class="axis-state">
+      <div
+        v-else-if="financeStore.timeline.length === 0"
+        class="axis-state"
+      >
         <p>暂无消费记录</p>
         <small>去「录入」添加饮食或购物</small>
+      </div>
+
+      <div
+        v-else-if="filteredTimeline.length === 0"
+        class="axis-state"
+      >
+        <p>该时间段暂无记录</p>
+        <small>试试调整右侧时间筛选</small>
       </div>
 
       <div v-else class="axis-scroll">
         <ul class="axis-tree">
           <li
-            v-for="day in financeStore.timeline"
+            v-for="day in filteredTimeline"
             :key="day.date"
             class="axis-day"
             :class="{ open: financeStore.expandedDate === day.date }"
@@ -174,6 +241,35 @@ onMounted(() => {
       </header>
 
       <div class="filter-group">
+        <span class="filter-label">时间线</span>
+        <div class="filter-chips">
+          <button
+            v-for="opt in timelineFilterOptions"
+            :key="opt.value"
+            type="button"
+            class="chip"
+            :class="{ active: timelineFilter === opt.value }"
+            @click="timelineFilter = opt.value"
+          >
+            {{ opt.label }}
+          </button>
+        </div>
+        <div v-if="timelineFilter === 'custom'" class="date-range">
+          <label class="date-field">
+            <span>起</span>
+            <input v-model="dateRangeStart" type="date" class="filter-input" />
+          </label>
+          <label class="date-field">
+            <span>止</span>
+            <input v-model="dateRangeEnd" type="date" class="filter-input" />
+          </label>
+        </div>
+        <p class="filter-count">
+          显示 {{ filteredTimeline.length }} / {{ financeStore.timeline.length }} 天
+        </p>
+      </div>
+
+      <div class="filter-group">
         <span class="filter-label">分类</span>
         <div class="filter-chips">
           <button
@@ -214,12 +310,14 @@ onMounted(() => {
   --line: #e8e0d0;
   --border: #eee8d8;
 
+  width: 100%;
+  height: 100%;
+  min-height: 0;
   display: grid;
-  grid-template-columns: 1fr minmax(180px, 220px);
-  min-height: 480px;
+  grid-template-columns: 1fr minmax(200px, 240px);
   background: var(--bg);
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border-radius: 0;
+  box-shadow: none;
   overflow: hidden;
   color: var(--text);
   font-size: 14px;
@@ -230,6 +328,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
   border-right: 1px solid var(--border);
 }
 
@@ -502,11 +601,21 @@ onMounted(() => {
 
 /* 右侧筛选 */
 .filter-panel {
+  min-height: 0;
+  overflow-y: auto;
   padding: 22px 20px;
   background: var(--bg-soft);
   display: flex;
   flex-direction: column;
   gap: 22px;
+
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--line);
+    border-radius: 3px;
+  }
 }
 
 .filter-head {
@@ -575,6 +684,30 @@ onMounted(() => {
     font-weight: 600;
     box-shadow: 0 2px 8px rgba(195, 39, 43, 0.08);
   }
+}
+
+.date-range {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  span {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+}
+
+.filter-count {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 .filter-input {

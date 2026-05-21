@@ -3,7 +3,7 @@
 </script>
 
 <template>
-  <div class="health-select">
+  <div class="health-select select-panel">
     <div class="card-header">
       <h3 class="card-title">健康记录 💪</h3>
     </div>
@@ -17,10 +17,15 @@
 <style scoped lang="less">
 .health-select {
   width: 100%;
-  background: #FFFFFF;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 0;
+  padding: 22px 28px;
+  box-shadow: none;
+  box-sizing: border-box;
 }
 
 .card-header {
@@ -37,7 +42,8 @@
 }
 
 .card-content {
-  min-height: 200px;
+  flex: 1;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -67,7 +67,7 @@ const categoriesBase = [
     title: '健康',
     originalSubtitle: '人是铁 饭是钢 一顿不吃饿得慌',
     image: healthImage,
-    path: '/user/select/health',
+    path: '/user/select',
     statusKey: 'health'
   },
   {
@@ -75,7 +75,7 @@ const categoriesBase = [
     title: '财务',
     originalSubtitle: '金钱不是万能的 但没有钱是万万不能的',
     image: financeImage,
-    path: '/user/select/finance',
+    path: '/user/select',
     statusKey: 'finance'
   },
   {
@@ -83,7 +83,7 @@ const categoriesBase = [
     title: '知识',
     originalSubtitle: '芝士 就是力量',
     image: knowledgeImage,
-    path: '/user/select/knowledge',
+    path: '/user/select',
     statusKey: 'knowledge'
   },
   {
@@ -91,7 +91,7 @@ const categoriesBase = [
     title: '备忘',
     originalSubtitle: '活着不是为了不朽 而是为了创造不朽',
     image: memoImage,
-    path: '/user/select/memo',
+    path: '/user/select',
     statusKey: 'memo'
   }
 ]
