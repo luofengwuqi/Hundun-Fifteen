@@ -2,6 +2,7 @@ package com.createpen.fifteenhundun.module.payment.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.createpen.fifteenhundun.common.context.BaseContext;
+import com.createpen.fifteenhundun.common.util.FinanceUtil;
 import com.createpen.fifteenhundun.module.payment.mapper.PaymentMapper;
 import com.createpen.fifteenhundun.module.payment.pojo.dto.PaymentDto;
 import com.createpen.fifteenhundun.module.payment.pojo.entity.Payment;
@@ -9,7 +10,6 @@ import com.createpen.fifteenhundun.module.payment.service.PaymentService;
 import com.createpen.fifteenhundun.module.selecter.pojo.vo.FinanceDetailVo;
 import com.createpen.fifteenhundun.module.selecter.provider.FinanceProvider;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -87,7 +87,9 @@ public class PaymentServiceImpl implements PaymentService,  FinanceProvider {
         List<Payment> paymentList = new ArrayList<>();
         for(PaymentDto dto:dtoList){
             Payment tempEntity = new Payment();
-            BeanUtils.copyProperties(dto,tempEntity);
+            tempEntity.setName(dto.getName());
+            tempEntity.setPrice(FinanceUtil.BigDecimalX100(dto.getPrice())) ;
+            tempEntity.setType(dto.getType());
             if (tempEntity.getType()==null){
                 tempEntity.setType(PAYMENT_TYPE_UNKNOWN);
             }

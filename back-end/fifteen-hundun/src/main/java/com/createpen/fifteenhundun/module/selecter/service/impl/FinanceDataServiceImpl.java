@@ -56,7 +56,9 @@ public class FinanceDataServiceImpl implements FinanceDataService {
         List<FinanceDetailVo> list = new ArrayList<>();
         for (FinanceProvider provider : providers) {
             FinanceDetailVo financeData = provider.getFinanceDetailData(date);
-            list.add(financeData);
+            if (financeData != null && !financeData.getDataMap().isEmpty()){
+                list.add(financeData);
+            }
         }
         return Result.success(list);
     }

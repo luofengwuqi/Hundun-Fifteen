@@ -78,7 +78,6 @@ const handleOK = async () => {
     //res.data.code:1 成功 0 已存在
     if(res.data === 0){
       //已有记录 弹出警告框
-// TODO: 警告框函数
       showWarning(dataToSend)
       return
     }
@@ -88,7 +87,6 @@ const handleOK = async () => {
     console.error('保存失败:', error)
   }
 }
-// TODO: 警告框函数
 const showWarning = (dto) => {
   ElMessageBox.confirm(
     `您今天似乎已经记录过了呢/w\\
