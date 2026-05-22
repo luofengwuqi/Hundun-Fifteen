@@ -268,6 +268,26 @@ INSERT INTO `user_food_health` VALUES (1,3,'2026-05-12','包子','包子','','')
 UNLOCK TABLES;
 
 --
+-- Table structure for table `user_sleep_health`
+--
+
+DROP TABLE IF EXISTS `user_sleep_health`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `user_sleep_health` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `date` date NOT NULL COMMENT '睡眠记录日期',
+  `quality` tinyint NOT NULL COMMENT '睡眠质量：0差 1一般 2好',
+  `duration_min` int DEFAULT NULL COMMENT '睡眠时长（分钟）',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_sleep_date` (`user_id`,`date`),
+  CONSTRAINT `user_sleep_health_users_id_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户每日睡眠';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `user_memo_common`
 --
 

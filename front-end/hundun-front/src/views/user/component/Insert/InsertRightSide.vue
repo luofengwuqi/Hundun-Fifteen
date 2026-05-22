@@ -7,6 +7,7 @@ import FeatureDisabled from './form/FeatureDisabled.vue'
 import MemoCommon from './form/MemoCommon.vue'
 import MemoImportant from './form/MemoImportant.vue'
 import Payment from './form/Payment.vue'
+import SleepHealth from './form/SleepHealth.vue'
 
 /** 与 CSS 中 --insert-panel-duration 保持一致 */
 const PANEL_TRANSITION_MS = 360
@@ -30,6 +31,11 @@ const emit = defineEmits(['hide-component'])
 const isModulesEnabled = computed(() => {
   const status = userStore.userModelStatus
   return status && status.health === 1 && status.finance === 1
+})
+
+const isHealthEnabled = computed(() => {
+  const status = userStore.userModelStatus
+  return status && status.health === 1
 })
 
 const hiddenComponents = ref(new Set())
@@ -90,7 +96,25 @@ const componentsToShow = computed(() => {
     }
   }
   if (props.selectedActions.includes('睡得咋样')) {
-    console.log('TODO: 添加睡得咋样的组件')
+    if (!isHealthEnabled.value) {
+      if (!hiddenComponents.value.has('SleepFeatureDisabled')) {
+        components.push({
+          name: 'SleepFeatureDisabled',
+          component: FeatureDisabled,
+          props: {
+            title: '功能未启用 (灬º﹃º灬)',
+            message: '记录睡眠请先启用健康模块',
+            icon: '🔒'
+          }
+        })
+      }
+    } else if (!hiddenComponents.value.has('SleepHealth')) {
+      components.push({
+        name: 'SleepHealth',
+        component: SleepHealth,
+        onHide: () => handleHideComponent('SleepHealth')
+      })
+    }
   }
   if (props.selectedActions.includes('心情如何')) {
     console.log('TODO: 添加心情如何的组件')

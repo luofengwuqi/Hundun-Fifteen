@@ -44,6 +44,12 @@ const handleHideComponent = (componentName) => {
     hiddenComponents.value.clear()
   }
   
+  if (componentName === 'SleepHealth') {
+    const newActions = selectedActions.value.filter(action => action !== '睡得咋样')
+    selectedActions.value = [...newActions]
+    hiddenComponents.value.clear()
+  }
+
   // 检查是否是 Payment 组件被隐藏
   if (componentName === 'Payment') {
     console.log('Payment hidden, clearing selection')
