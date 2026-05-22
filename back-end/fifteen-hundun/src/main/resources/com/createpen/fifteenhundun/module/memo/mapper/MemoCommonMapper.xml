@@ -33,8 +33,14 @@
 
     <!-- 根据用户ID查询所有普通备忘 -->
     <select id="selectMemoCommonsByUserId" resultType="com.createpen.fifteenhundun.module.memo.pojo.Entity.MemoCommon">
-        SELECT * FROM user_memo_common 
-        WHERE user_id = #{userId} 
+        SELECT * FROM user_memo_common
+        WHERE user_id = #{userId}
+        <if test="completion == 'done'">
+            AND status = 2
+        </if>
+        <if test="completion == 'pending'">
+            AND status != 2
+        </if>
         ORDER BY created_at DESC
     </select>
 

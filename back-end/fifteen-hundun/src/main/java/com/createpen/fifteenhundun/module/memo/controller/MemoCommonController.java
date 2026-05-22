@@ -65,11 +65,27 @@ public class MemoCommonController {
     /**
      * 查询当前用户的所有普通备忘
      */
+    /**
+     * 查询当前用户的普通备忘列表
+     * @param completion 可选：pending-未完成，done-已完成；不传为全部
+     */
     @GetMapping
-    public Result<List<MemoCommon>> getUserMemos() {
-        log.info("查询当前用户的普通备忘列表");
+    public Result<List<MemoCommon>> getUserMemos(
+            @RequestParam(required = false) String completion) {
+        log.info("查询当前用户的普通备忘列表, completion: {}", completion);
         Long userId = BaseContext.getCurrentId();
-        List<MemoCommon> memos = memoCommonService.selectMemoCommonsByUserId(userId);
+        String filter = normalizeCompletion(completion);
+        List<MemoCommon> memos = memoCommonService.selectMemoCommonsByUserId(userId, filter);
         return Result.success(memos);
+    }
+
+    private static String normalizeCompletion(String completion) {
+        if (completion == null || completion.isBlank()) {
+            return null;
+        }
+        return switch (completion.trim().toLowerCase()) {
+            case "pending", "done" -> completion.trim().toLowerCase();
+            default -> null;
+        };
     }
 }
