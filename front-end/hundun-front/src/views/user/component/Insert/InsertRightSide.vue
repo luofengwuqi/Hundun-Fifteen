@@ -5,6 +5,7 @@ import WhatAteToday from './form/WhatAteToday.vue'
 import MealCost from './form/MealCost.vue'
 import FeatureDisabled from './form/FeatureDisabled.vue'
 import MemoCommon from './form/MemoCommon.vue'
+import MemoImportant from './form/MemoImportant.vue'
 import Payment from './form/Payment.vue'
 
 /** 与 CSS 中 --insert-panel-duration 保持一致 */
@@ -94,11 +95,8 @@ const componentsToShow = computed(() => {
   if (props.selectedActions.includes('心情如何')) {
     console.log('TODO: 添加心情如何的组件')
   }
-  if (props.selectedActions.includes('遇到趣事')) {
-    console.log('TODO: 添加遇到趣事的组件')
-  }
-  if (props.selectedActions.includes('今日感悟')) {
-    console.log('TODO: 添加今日感悟的组件')
+  if (props.selectedActions.includes('今日记录')) {
+    console.log('TODO: 添加今日记录的组件')
   }
   if (props.selectedActions.includes('整点计划')) {
     if (!hiddenComponents.value.has('MemoCommon')) {
@@ -106,6 +104,15 @@ const componentsToShow = computed(() => {
         name: 'MemoCommon',
         component: MemoCommon,
         onHide: () => handleHideComponent('MemoCommon')
+      })
+    }
+  }
+  if (props.selectedActions.includes('重要备忘')) {
+    if (!hiddenComponents.value.has('MemoImportant')) {
+      components.push({
+        name: 'MemoImportant',
+        component: MemoImportant,
+        onHide: () => handleHideComponent('MemoImportant')
       })
     }
   }

@@ -36,6 +36,11 @@ export const getMemo = async (id) => {
 /**
  * 查询当前用户的所有普通备忘
  */
-export const getUserMemos = async () => {
-  return await request.get('/memo/common')
+/**
+ * 查询当前用户的普通备忘
+ * @param {Object} [params]
+ * @param {string} [params.completion] pending-未完成，done-已完成；不传为全部
+ */
+export const getUserMemos = async (params) => {
+  return await request.get('/memo/common', { params })
 }
