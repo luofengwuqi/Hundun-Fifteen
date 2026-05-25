@@ -197,6 +197,11 @@
 		<artifactId>mybatis-plus-boot-starter</artifactId>
 		<version>3.5.5</version>
 	</dependency>
+<!--	引入spring amqp依赖	-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-amqp</artifactId>
+		</dependency>
     </dependencies>
 
 	<build>
