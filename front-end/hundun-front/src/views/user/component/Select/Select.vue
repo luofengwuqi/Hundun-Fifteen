@@ -93,10 +93,10 @@ const handleCategorySelect = (category) => {
 .right-panel {
   flex: 1;
   height: 100%;
+  min-width: 0;
   background: rgba(255, 248, 232, 0.65);
   border-radius: 16px;
   overflow: hidden;
-  overflow-y: auto;
   backdrop-filter: blur(10px);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
   

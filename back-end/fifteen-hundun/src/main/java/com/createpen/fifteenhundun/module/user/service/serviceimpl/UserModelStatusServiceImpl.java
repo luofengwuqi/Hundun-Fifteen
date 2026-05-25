@@ -62,11 +62,11 @@ public class UserModelStatusServiceImpl implements UserModelStatusService {
 
         UserModelStatus status = new UserModelStatus();
         status.setUserId(userId);
-        // 默认所有模块都禁用
-        status.setHealth(0);
-        status.setFinance(0);
-        status.setKnowledge(0);
-        status.setMemo(0);
+        // todo:默认所有模块都启用
+        status.setHealth(1);
+        status.setFinance(1);
+        status.setKnowledge(1);
+        status.setMemo(1);
         // 标记为新用户
         status.setIsNewUser(1);
         return status;

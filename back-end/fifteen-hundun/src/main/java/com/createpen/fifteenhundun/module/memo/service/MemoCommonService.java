@@ -31,6 +31,11 @@ public interface MemoCommonService {
      * 查询当前用户的所有普通备忘
      */
     List<MemoCommon> selectMemoCommonsByUserId(Long userId);
+
+    /**
+     * @param completion 可选：pending / done；null 表示全部
+     */
+    List<MemoCommon> selectMemoCommonsByUserId(Long userId, String completion);
     
     /**
      * 查询所有普通备忘（管理员功能）

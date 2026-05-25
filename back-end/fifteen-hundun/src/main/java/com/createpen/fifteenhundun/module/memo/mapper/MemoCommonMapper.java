@@ -30,9 +30,12 @@ public interface MemoCommonMapper {
     MemoCommon selectMemoCommonById(Long id);
     
     /**
-     * 根据用户ID查询所有普通备忘
+     * 根据用户ID查询普通备忘
+     * @param completion 可选：pending-未完成，done-已完成；null 或空为全部
      */
-    List<MemoCommon> selectMemoCommonsByUserId(Long userId);
+    List<MemoCommon> selectMemoCommonsByUserId(
+            @Param("userId") Long userId,
+            @Param("completion") String completion);
     
     /**
      * 查询所有普通备忘

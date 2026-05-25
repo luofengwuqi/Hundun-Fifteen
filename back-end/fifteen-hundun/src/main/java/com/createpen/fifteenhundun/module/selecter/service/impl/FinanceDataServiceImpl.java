@@ -1,10 +1,13 @@
 package com.createpen.fifteenhundun.module.selecter.service.impl;
 
+import com.createpen.fifteenhundun.common.context.BaseContext;
 import com.createpen.fifteenhundun.common.response.Result;
 import com.createpen.fifteenhundun.module.selecter.pojo.vo.FinanceDetailVo;
 import com.createpen.fifteenhundun.module.selecter.pojo.vo.FinanceVo;
 import com.createpen.fifteenhundun.module.selecter.provider.FinanceProvider;
 import com.createpen.fifteenhundun.module.selecter.service.FinanceDataService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -12,52 +15,115 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
+@Slf4j
 @Service
 public class FinanceDataServiceImpl implements FinanceDataService {
-    private final List<FinanceProvider> providers;
 
-    public FinanceDataServiceImpl(List<FinanceProvider> providers) {
+    private final List<FinanceProvider> providers;
+    private final Executor financeExecutor;  // 用 Spring 的线程池，不要自己 new Thread
+
+    public FinanceDataServiceImpl(
+            List<FinanceProvider> providers,
+            @Qualifier("generalExecutor") Executor financeExecutor
+    ) {
         this.providers = providers;
+        this.financeExecutor = financeExecutor;
     }
+
 
 
     @Override
     public Result<List<FinanceVo>> getSingleFinanceData() {
-        // 总Map：保持插入顺序 + 存储最终 日期-总花费
-        Map<LocalDate, Integer> totalMap = new LinkedHashMap<>();
+        Long userId = BaseContext.getCurrentId();
+        List<CompletableFuture<Map<LocalDate, Integer>>> futures = new ArrayList<>();
+        //1.执行异步
+        for (FinanceProvider provider : providers){
+            //异步任务<任务返回值类型>
+            CompletableFuture<Map<LocalDate, Integer>> future =
+                    //开启异步任务
+                    CompletableFuture.supplyAsync(()->{
+                        try{
+                            BaseContext.setCurrentId(userId);//给子线程设置当前用户 ID
+                            return provider.getFinanceSimpleData();
+                        } finally {
+                            BaseContext.clearAll();//清理线程局部变量，防止内存泄漏、数据错乱
+                        }
+                    },financeExecutor);// 指定线程池
+            futures.add(future);
+        }
+        //2.等待异步
+        CompletableFuture<?>[] arr = futures.toArray(new CompletableFuture[0]);//传参:空数组模版
+        CompletableFuture.allOf(arr).join();
+        // .allOf(数组)
+        // 作用：等待【数组中所有的异步任务】全部执行完成
+        // .join()
+        // 作用：让主线程【阻塞在这里】，不继续往下走 直到：所有子线程（查food、payment、travel...）全部查完，才放行
 
-        // 遍历所有模块（food、buy、travel...）
-        for (FinanceProvider provider : providers) {
-            // 获取单个模块的日期花费
-            Map<LocalDate, Integer> singleMap = provider.getFinanceSimpleData();
+        // 3.处理结果
+        Map<LocalDate, Integer> totalMap = new LinkedHashMap<>();
+        for (CompletableFuture<Map<LocalDate, Integer>> future : futures) {
+            Map<LocalDate, Integer> singleMap = future.join();  // 取这个异步任务的结果
             if (singleMap != null && !singleMap.isEmpty()) {
-                // 核心：合并到总Map，相同日期自动累加金额
-                singleMap.forEach((date, amount) -> 
-                    totalMap.merge(date, amount, Integer::sum)
-                );
+                for (Map.Entry<LocalDate, Integer> entry : singleMap.entrySet()) {
+                    LocalDate date = entry.getKey();
+                    Integer amount = entry.getValue();
+                    // 同一天累加
+                    totalMap.merge(date, amount, Integer::sum);
+                }
             }
         }
-
-        // 转换为前端需要的 List<FinanceVo>
         List<FinanceVo> voList = new ArrayList<>();
-        totalMap.forEach((date, total) -> {
+        for (Map.Entry<LocalDate, Integer> entry : totalMap.entrySet()) {
             FinanceVo vo = new FinanceVo();
-            vo.setDate(date);
-            vo.setTotalPrice(total);
+            vo.setDate(entry.getKey());
+            vo.setTotalPrice(entry.getValue());
             voList.add(vo);
-        });
-
+        }
         return Result.success(voList);
     }
 
     @Override
     public Result<List<FinanceDetailVo>> getFinanceData(LocalDate date) {
-        List<FinanceDetailVo> list = new ArrayList<>();
-        for (FinanceProvider provider : providers) {
-            FinanceDetailVo financeData = provider.getFinanceDetailData(date);
-            list.add(financeData);
+        Long currentId = BaseContext.getCurrentId();
+        //1,执行异步
+        List<CompletableFuture<FinanceDetailVo>> futures = new ArrayList<>();
+        for(FinanceProvider provider : providers){
+            CompletableFuture<FinanceDetailVo> future =
+                CompletableFuture.supplyAsync(()->{
+                    try{
+                        BaseContext.setCurrentId(currentId);
+                        return provider.getFinanceDetailData( date);
+                    }finally {
+                        BaseContext.clearAll();
+                    }
+                },financeExecutor);
+            futures.add(future);
         }
-        return Result.success(list);
+        //2.等待异步
+        CompletableFuture<?>[] arr = futures.toArray(new CompletableFuture[0]);
+        CompletableFuture.allOf(arr).join();
+        //3.处理结果
+        List<FinanceDetailVo> totalList = new ArrayList<>();
+        for (CompletableFuture<FinanceDetailVo> future : futures) {
+            FinanceDetailVo vo = future.join();
+            if (vo != null && !vo.getDataMap().isEmpty()) {
+                totalList.add(vo);
+            }
+        }
+        return Result.success(totalList);
+
+
+//
+//        List<FinanceDetailVo> list = new ArrayList<>();
+//        for (FinanceProvider provider : providers) {
+//            FinanceDetailVo financeData = provider.getFinanceDetailData(date);
+//            if (financeData != null && !financeData.getDataMap().isEmpty()){
+//                list.add(financeData);
+//            }
+//        }
+//        return Result.success(list);
     }
 }

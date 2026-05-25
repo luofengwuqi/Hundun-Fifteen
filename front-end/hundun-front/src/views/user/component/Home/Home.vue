@@ -1,6 +1,6 @@
 <script setup>
 // 首页组件 - 录入与翻找功能入口
-import { ref,  computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import insertImage from '@/assets/img/user/home/insert.png'
 import selectImage from '@/assets/img/user/home/select.png'
@@ -17,6 +17,11 @@ const isAnimating = ref(false) // 控制动画状态
 
 //pinia
 const userStore = useUserStore()
+
+// 组件挂载时获取用户模型状态
+onMounted(() => {
+  userStore.initUserModelStatus()
+})
 
 // 长按充能相关状态
 const chargingBoxId = ref(null) // 当前正在充能的盒子ID
@@ -62,7 +67,7 @@ const categoriesBase = [
     title: '健康',
     originalSubtitle: '人是铁 饭是钢 一顿不吃饿得慌',
     image: healthImage,
-    path: '/user/select/health',
+    path: '/user/select',
     statusKey: 'health'
   },
   {
@@ -70,7 +75,7 @@ const categoriesBase = [
     title: '财务',
     originalSubtitle: '金钱不是万能的 但没有钱是万万不能的',
     image: financeImage,
-    path: '/user/select/finance',
+    path: '/user/select',
     statusKey: 'finance'
   },
   {
@@ -78,7 +83,7 @@ const categoriesBase = [
     title: '知识',
     originalSubtitle: '芝士 就是力量',
     image: knowledgeImage,
-    path: '/user/select/knowledge',
+    path: '/user/select',
     statusKey: 'knowledge'
   },
   {
@@ -86,7 +91,7 @@ const categoriesBase = [
     title: '备忘',
     originalSubtitle: '活着不是为了不朽 而是为了创造不朽',
     image: memoImage,
-    path: '/user/select/memo',
+    path: '/user/select',
     statusKey: 'memo'
   }
 ]

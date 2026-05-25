@@ -9,4 +9,6 @@ import java.util.List;
 @Mapper
 public interface PaymentMapper extends BaseMapper<Payment> {
     List<Payment> getFinanceSimpleData(Long userId);
+
+    void insertPaymentList(List<Payment> payments);
 }

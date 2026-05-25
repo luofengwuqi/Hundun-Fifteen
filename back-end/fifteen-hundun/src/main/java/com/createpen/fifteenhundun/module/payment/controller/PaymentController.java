@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Arrays;
+
 @RestController
 @RequestMapping("/payment")
 @Slf4j
@@ -25,9 +27,9 @@ public class PaymentController {
 
     //获取paymentList
     @PostMapping
-    public Result<Payment> savePayment(@RequestBody PaymentDto dto) {
+    public Result<Payment> savePayment(@RequestBody PaymentDto[] dtoArray) {
         log.info("post payments");
-        paymentService.savePayment(dto);
+        paymentService.savePayment(Arrays.asList(dtoArray));
         return Result.success();
     }
 }

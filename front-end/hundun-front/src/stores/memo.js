@@ -27,9 +27,11 @@ export const useMemoStore = defineStore('memo', () => {
   /**
    * 获取当前用户的所有普通备忘
    */
-  const getCommonMemos = async () => {
+  const getCommonMemos = async (completion) => {
     try {
-      const res = await getCommonUserMemos()
+      const params =
+        completion && completion !== 'all' ? { completion } : undefined
+      const res = await getCommonUserMemos(params)
       commonMemos.value = res.data || []
       return res
     } catch (error) {
@@ -59,11 +61,10 @@ export const useMemoStore = defineStore('memo', () => {
    * @param {number} id - 备忘ID
    * @param {Object} dto - 更新的备忘数据
    */
-  const editCommonMemo = async (id, dto) => {
+  const editCommonMemo = async (id, dto, completion) => {
     try {
       const res = await updateCommonMemo(id, dto)
-      // 更新成功后重新获取列表
-      await getCommonMemos()
+      await getCommonMemos(completion ?? 'all')
       return res
     } catch (error) {
       console.error('更新普通备忘失败:', error)

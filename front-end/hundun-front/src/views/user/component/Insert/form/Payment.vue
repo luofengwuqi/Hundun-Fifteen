@@ -1,6 +1,7 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { savePaymentAPI } from '@/api/payment.js'
 
 // 定义事件
 const emit = defineEmits(['hide'])
@@ -10,17 +11,27 @@ const paymentList = reactive([
   {
     id: Date.now(),
     productName: '',
-    productPrice: ''
+    productPrice: '',
+    paymentType: 0 // 默认未指定
   }
 ])
 
 // 错误信息
 const errors = reactive({})
 
+// 消费类型选项
+const paymentTypeOptions = [
+  { value: 0, label: '未指定' },
+  { value: 1, label: '生活/健康' },
+  { value: 2, label: '学习/投资' },
+  { value: 3, label: '社交/娱乐' },
+  { value: 4, label: '责任/应急' }
+]
+
 // 验证单个字段
 const validateField = (index, field, value) => {
   const key = `${index}_${field}`
-  
+
   if (field === 'productName') {
     if (!value || value.trim() === '') {
       errors[key] = '商品名称不能为空'
@@ -35,14 +46,26 @@ const validateField = (index, field, value) => {
   }
 
   if (field === 'productPrice') {
-    if (!value || value.trim() === '') {
+    // 将值转换为字符串进行处理
+    const strValue = String(value || '')
+    if (!strValue || strValue.trim() === '') {
       errors[key] = '商品价格不能为空'
       return false
     }
     // 验证是否为有效的数字
-    const price = parseFloat(value)
+    const price = parseFloat(strValue)
     if (isNaN(price) || price < 0) {
       errors[key] = '请输入有效的价格'
+      return false
+    }
+    errors[key] = ''
+    return true
+  }
+
+  if (field === 'paymentType') {
+    // 消费类型为必填项，且是数字类型
+    if (value === null || value === undefined || value === '') {
+      errors[key] = '请选择消费类型'
       return false
     }
     errors[key] = ''
@@ -68,6 +91,9 @@ const validateAll = () => {
     if (!validateField(index, 'productPrice', item.productPrice)) {
       isValid = false
     }
+    if (!validateField(index, 'paymentType', item.paymentType)) {
+      isValid = false
+    }
   })
   return isValid
 }
@@ -77,7 +103,8 @@ const addPaymentItem = () => {
   paymentList.push({
     id: Date.now(),
     productName: '',
-    productPrice: ''
+    productPrice: '',
+    paymentType: 0 // 默认未指定
   })
 }
 
@@ -110,15 +137,17 @@ const handleOK = async () => {
 
   // 准备提交数据
   const dataToSend = paymentList.map(item => ({
-    productName: item.productName.trim(),
-    productPrice: parseFloat(item.productPrice)
+    name: String(item.productName || '').trim(),
+    price: Math.round(Number(item.productPrice)) || 0,
+    type: item.paymentType
   }))
 
   console.log('保存购物记录:', dataToSend)
-  
+
   // TODO: 调用后端 API 保存数据
   try {
-    // await savePaymentAPI(dataToSend)
+    console.log('准备保存购物记录:', dataToSend)
+    await savePaymentAPI(dataToSend)
     ElMessage.success('购物记录保存成功 ✧(≖ ◡ ≖✿)')
     emit('hide')
   } catch (error) {
@@ -139,18 +168,18 @@ const handleOK = async () => {
         <div v-for="(item, index) in paymentList" :key="item.id" class="payment-item-group">
           <!-- 右上角的 +/- 控件 -->
           <div class="item-controls">
-            <button 
+            <button
               type="button"
-              class="control-btn remove-btn" 
+              class="control-btn remove-btn"
               @click="removePaymentItem(index)"
               :disabled="paymentList.length <= 1"
               title="删除此项"
             >
               -
             </button>
-            <button 
+            <button
               type="button"
-              class="control-btn add-btn" 
+              class="control-btn add-btn"
               @click="addPaymentItem"
               title="添加新项"
             >
@@ -158,7 +187,7 @@ const handleOK = async () => {
             </button>
           </div>
 
-          <!-- 商品名称和价格在同行 -->
+          <!-- 商品名称、价格和消费类型 -->
           <div class="form-row">
             <!-- 商品名称 -->
             <div class="form-item">
@@ -171,7 +200,7 @@ const handleOK = async () => {
                 v-model="item.productName"
                 @input="handleInput(index, 'productName')"
                 type="text"
-                placeholder="输入商品名称"
+                placeholder="买的啥?"
                 class="form-input"
                 :class="{ 'has-error': errors[`${index}_productName`] }"
               />
@@ -189,13 +218,33 @@ const handleOK = async () => {
                 v-model="item.productPrice"
                 @input="handleInput(index, 'productPrice')"
                 type="number"
-                placeholder="输入价格"
+                placeholder="价格?"
                 step="0.01"
                 min="0"
                 class="form-input"
                 :class="{ 'has-error': errors[`${index}_productPrice`] }"
               />
               <span v-if="errors[`${index}_productPrice`]" class="error-message">{{ errors[`${index}_productPrice`] }}</span>
+            </div>
+
+            <!-- 消费类型 -->
+            <div class="form-item">
+              <label class="form-label" :for="`paymentType_${index}`">
+                <span class="form-icon">📊</span>
+                <span class="form-name">消费类型</span>
+              </label>
+              <select
+                :id="`paymentType_${index}`"
+                v-model="item.paymentType"
+                @change="handleInput(index, 'paymentType')"
+                class="form-select"
+                :class="{ 'has-error': errors[`${index}_paymentType`] }"
+              >
+                <option v-for="option in paymentTypeOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+              <span v-if="errors[`${index}_paymentType`]" class="error-message">{{ errors[`${index}_paymentType`] }}</span>
             </div>
           </div>
         </div>
@@ -262,22 +311,23 @@ const handleOK = async () => {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
 }
 
 .payment-item-group {
   position: relative;
-  padding: 12px;
-  background: #FFFFFF;
+  padding-top: 17px;
+  background: transparent;
   border-radius: 8px;
-  border: 2px solid #FFEFD5;
+  border: none;
   transition: none;
+  margin-bottom: 8px;
 
 }
 
 .item-controls {
   position: absolute;
-  top: 8px;
+  top: -5px;
   right: 8px;
   display: flex;
   gap: 6px;
@@ -379,6 +429,35 @@ const handleOK = async () => {
 .form-input::placeholder {
   color: #AAA;
   font-style: italic;
+}
+
+.form-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #FFEFD5;
+  border-radius: 8px;
+  background: #FFFFFF;
+  font-size: 14px;
+  font-family: inherit;
+  color: #333333;
+  transition: none;
+  outline: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+
+  &:focus {
+    border-color: #C3272B;
+    box-shadow: 0 0 0 3px rgba(195, 39, 43, 0.1);
+  }
+
+  &.has-error {
+    border-color: #E74C3C;
+  }
 }
 
 .error-message {
