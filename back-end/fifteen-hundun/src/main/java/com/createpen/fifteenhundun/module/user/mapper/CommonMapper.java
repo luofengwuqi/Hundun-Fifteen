@@ -8,4 +8,6 @@ import org.apache.ibatis.annotations.Mapper;
 public interface CommonMapper {
     //自动写入日志最终调用的方法
     void addLog(OperateLog o);
+
+    void deleteRelatedTables(Long userId, String tableName);
 }

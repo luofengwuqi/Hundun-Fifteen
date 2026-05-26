@@ -66,4 +66,7 @@
             </if>
             )
         </insert>
+    <delete id="deleteRelatedTables">
+        delete from ${tableName} where user_id = #{userId}
+    </delete>
 </mapper>

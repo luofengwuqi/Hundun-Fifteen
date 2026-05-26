@@ -4,4 +4,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface CommonService {
     String addFile(MultipartFile file);
+    void deleteFile(Long userId);
+    void deleteRelatedTables(Long userId);
 }
+

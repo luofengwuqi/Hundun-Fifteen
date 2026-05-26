@@ -16,10 +16,21 @@ spring:
       database: ${fifteen-hundun.redis.database}
       timeout: ${fifteen-hundun.redis.timeout}
 
-## JWT配置
-#jwt:
-#  secret: 5LiA5LqU6aaE6aWoY3JlYXRwZW4= # 密钥（建议至少32位）
-#  expiration: 3600 # 令牌过期时间（秒）
+## JWT配置（当前直接在JwtUtil.java中硬编码，如需外部配置可启用下方并创建@ConfigurationProperties）
+jwt:
+   secret: THVvZmVuZ3d1cWkxNWh1bmR1bkp3dFBhc3N3b3JkTG9uZ0Vub3VnaFBsZWFzZQ==
+   expiration: 24*60*60*1000
+# 自定义用户相关表配置
+user:
+  related-tables:
+    - article_user_interact
+    - user_food_finance
+    - user_food_health
+    - user_memo_common
+    - user_memo_important
+    - user_model_status
+    - user_payment_finance
+    - user_sleep_health
 
 # 阿里云OSS配置
 aliyun:

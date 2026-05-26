@@ -2,39 +2,30 @@ package com.createpen.fifteenhundun.common.util;
 
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClientBuilder;
+import com.aliyun.oss.model.ListObjectsRequest;
+import com.aliyun.oss.model.OSSObjectSummary;
+import com.aliyun.oss.model.ObjectListing;
 import com.aliyun.oss.model.PutObjectRequest;
+import com.createpen.fifteenhundun.common.config.AliyunProperties;
 import com.createpen.fifteenhundun.common.exception.MyException.OSSException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.UUID;
 
-/**
- * 阿里云OSS工具类
- * AI生成
- */
 @Slf4j
 @Component
 public class AliOSSUtil {
 
-    @Value("${aliyun.endpoint}")
-    private String endpoint;
+    private final AliyunProperties aliyunProperties;
 
-    @Value("${aliyun.access-key-id}")
-    private String accessKeyId;
-
-    @Value("${aliyun.access-key-secret}")
-    private String accessKeySecret;
-
-    @Value("${aliyun.bucket-name}")
-    private String bucketName;
-
-    @Value("${aliyun.domain}")
-    private String domain;
+    public AliOSSUtil(AliyunProperties aliyunProperties) {
+        this.aliyunProperties = aliyunProperties;
+    }
 
     /**
      * 上传文件到OSS
@@ -60,12 +51,16 @@ public class AliOSSUtil {
         // 3. 创建OSS客户端并上传文件
         OSS ossClient = null;
         try {
-            ossClient = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
+            ossClient = new OSSClientBuilder().build(
+                aliyunProperties.getEndpoint(),
+                aliyunProperties.getAccessKeyId(),
+                aliyunProperties.getAccessKeySecret()
+            );
             // 上传文件
-            ossClient.putObject(new PutObjectRequest(bucketName, objectName, inputStream));
+            ossClient.putObject(new PutObjectRequest(aliyunProperties.getBucketName(), objectName, inputStream));
             log.info("文件上传OSS成功：{}", objectName);
             // 4. 返回文件访问URL
-            return domain + "/" + objectName; // 如：https://xxx.oss-cn-hangzhou.aliyuncs.com/memos/avatars/a1b2c3d4.png
+            return aliyunProperties.getDomain() + "/" + objectName; // 如：https://xxx.oss-cn-hangzhou.aliyuncs.com/memos/avatars/a1b2c3d4.png
         } catch (Exception e) {
             log.error("文件上传OSS失败", e);
             throw new OSSException("文件上传失败");
@@ -86,6 +81,7 @@ public class AliOSSUtil {
      */
     public void delete(String fileUrl) {
         // 解析objectName（去掉域名部分）
+        String domain = aliyunProperties.getDomain();
         String objectName = fileUrl;
         if (fileUrl.startsWith(domain + "/")) {
             objectName = fileUrl.replace(domain + "/", "");
@@ -99,12 +95,58 @@ public class AliOSSUtil {
         
         OSS ossClient = null;
         try {
-            ossClient = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
-            ossClient.deleteObject(bucketName, objectName);
+            ossClient = new OSSClientBuilder().build(
+                aliyunProperties.getEndpoint(),
+                aliyunProperties.getAccessKeyId(),
+                aliyunProperties.getAccessKeySecret()
+            );
+            ossClient.deleteObject(aliyunProperties.getBucketName(), objectName);
             log.info("文件删除OSS成功：{}", objectName);
         } catch (Exception e) {
             log.error("文件删除OSS失败", e);
             throw new OSSException("文件删除失败");
+        } finally {
+            if (ossClient != null) {
+                ossClient.shutdown();
+            }
+        }
+    }
+
+    /**
+     * 删除指定目录下的所有文件
+     * @param prefix 目录前缀，如：username/files/
+     */
+    public void deleteDirectory(String prefix) {
+        OSS ossClient = null;
+        try {
+            ossClient = new OSSClientBuilder().build(
+                aliyunProperties.getEndpoint(),
+                aliyunProperties.getAccessKeyId(),
+                aliyunProperties.getAccessKeySecret()
+            );
+            
+            // 列出目录下所有文件
+            ObjectListing objectListing = ossClient.listObjects(new ListObjectsRequest(aliyunProperties.getBucketName()).withPrefix(prefix));
+            List<OSSObjectSummary> objectSummaries = objectListing.getObjectSummaries();
+            
+            if (objectSummaries.isEmpty()) {
+                log.info("目录 {} 下没有文件", prefix);
+                return;
+            }
+            
+            log.info("开始删除目录 {} 下的 {} 个文件", prefix, objectSummaries.size());
+            
+            // 逐个删除文件
+            for (OSSObjectSummary objectSummary : objectSummaries) {
+                String key = objectSummary.getKey();
+                ossClient.deleteObject(aliyunProperties.getBucketName(), key);
+                log.info("删除文件：{}", key);
+            }
+            
+            log.info("目录 {} 删除完成", prefix);
+        } catch (Exception e) {
+            log.error("删除目录 {} 失败", prefix, e);
+            throw new OSSException("删除目录失败: " + e.getMessage());
         } finally {
             if (ossClient != null) {
                 ossClient.shutdown();

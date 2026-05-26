@@ -2,14 +2,16 @@ package com.createpen.fifteenhundun;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableCaching
-@EnableScheduling//允许SpringTask运行
-@EnableAsync//启用异步支持
+@EnableScheduling
+@EnableAsync
+@ConfigurationPropertiesScan
 public class FifteenHundunApplication {
 
 	public static void main(String[] args) {

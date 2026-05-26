@@ -1,6 +1,7 @@
 package com.createpen.fifteenhundun.module.user.service.serviceimpl;
 
 //import com.createpen.fifteenhundun.common.constant.ImportantConstant;
+import com.createpen.fifteenhundun.common.config.UserRelatedTablesConfig;
 import com.createpen.fifteenhundun.common.context.BaseContext;
 import com.createpen.fifteenhundun.common.exception.MyException.*;
 import com.createpen.fifteenhundun.common.util.PasswordUtil;
@@ -16,6 +17,7 @@ import com.createpen.fifteenhundun.module.user.pojo.DTO.AddAdminDTO;
 import com.createpen.fifteenhundun.module.user.pojo.DTO.GetUsersDTO;
 import com.createpen.fifteenhundun.module.user.pojo.Entity.User;
 import com.createpen.fifteenhundun.module.user.service.AdminService;
+import com.createpen.fifteenhundun.module.user.service.CommonService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.pagehelper.Page;
@@ -36,7 +38,8 @@ import static com.createpen.fifteenhundun.common.constant.status.UserStatusConst
 @Slf4j
 @Service
 public class AdminServiceImpl implements AdminService {
-
+    @Autowired
+    private CommonService commonService;
     @Autowired
     private AdminMapper am;
     @Autowired
@@ -52,6 +55,9 @@ public class AdminServiceImpl implements AdminService {
     private ObjectMapper objectMapper;
     @Autowired
     private UserRedisService userRedisService;
+    
+    @Autowired
+    private UserRelatedTablesConfig userRelatedTablesConfig;
 
 
     @Override
@@ -264,8 +270,11 @@ public class AdminServiceImpl implements AdminService {
         if(u.getStatus() == STATUS_SUPER_ADMIN){
             throw new InsufficientPermissionsException("不许你这样对管理员 sama");
         }
+        //其他模块的删除
+        commonService.deleteRelatedTables(u.getId());
+        commonService.deleteFile(u.getId());
+        //用户模块的代码
         um.deleteUserById(id);
-        
         //清除用户查询缓存
         userRedisService.clearUsersCache();
     }

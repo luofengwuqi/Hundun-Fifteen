@@ -10,7 +10,7 @@ fifteen-hundun:
     access-key-id: REDACTED
     access-key-secret: REDACTED
     bucket-name: fifteen-hundun
-    domain: http://fifteen-hundun.oss-cn-beijing.aliyuncs.com
+    domain: https://fifteen-hundun.oss-cn-beijing.aliyuncs.com
   #redis配置
   redis:
     host: localhost
