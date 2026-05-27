@@ -9,6 +9,7 @@ import MemoImportant from './form/MemoImportant.vue'
 import Payment from './form/Payment.vue'
 import SleepHealth from './form/SleepHealth.vue'
 import MoodHealth from './form/MoodHealth.vue'
+import PlaceWhere from './form/PlaceWhere.vue'
 
 /** 与 CSS 中 --insert-panel-duration 保持一致 */
 const PANEL_TRANSITION_MS = 360
@@ -85,7 +86,25 @@ const componentsToShow = computed(() => {
   }
 
   if (props.selectedActions.includes('去了哪里')) {
-    console.log('TODO: 添加去了哪里的组件')
+    if (!isModulesEnabled.value) {
+      if (!hiddenComponents.value.has('PlaceFeatureDisabled')) {
+        components.push({
+          name: 'PlaceFeatureDisabled',
+          component: FeatureDisabled,
+          props: {
+            title: '功能未启用 (灬º﹃º灬)',
+            message: '使用当前组件请先启用财务模块和健康模块',
+            icon: '🔒'
+          }
+        })
+      }
+    } else if (!hiddenComponents.value.has('PlaceWhere')) {
+      components.push({
+        name: 'PlaceWhere',
+        component: PlaceWhere,
+        onHide: () => handleHideComponent('PlaceWhere')
+      })
+    }
   }
   if (props.selectedActions.includes('买了点啥')) {
     if (!hiddenComponents.value.has('Payment')) {

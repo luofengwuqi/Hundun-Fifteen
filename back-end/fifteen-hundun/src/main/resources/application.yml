@@ -32,6 +32,8 @@ user:
     - user_payment_finance
     - user_sleep_health
     - user_mood_health
+    - user_place_health
+    - user_place_finance
 
 # 阿里云OSS配置
 aliyun:

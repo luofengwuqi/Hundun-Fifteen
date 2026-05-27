@@ -476,3 +476,45 @@ CREATE TABLE `user_mood_health` (
   CONSTRAINT `user_mood_health_users_id_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户每日心情';
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `user_place_health`
+--
+
+DROP TABLE IF EXISTS `user_place_health`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `user_place_health` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `date` date NOT NULL COMMENT '外出记录日期',
+  `location` varchar(100) NOT NULL COMMENT '去了的地点',
+  `transport_mode` varchar(20) DEFAULT NULL COMMENT '交通方式',
+  `steps` int NOT NULL DEFAULT '0' COMMENT '今日步数',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_place_date` (`user_id`,`date`),
+  CONSTRAINT `user_place_health_users_id_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户每日外出健康';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `user_place_finance`
+--
+
+DROP TABLE IF EXISTS `user_place_finance`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `user_place_finance` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `date` date NOT NULL COMMENT '外出记录日期',
+  `transport_cost` int DEFAULT NULL COMMENT '交通消费（分，×100倍存储）',
+  `transport_mode` varchar(20) DEFAULT NULL COMMENT '交通方式',
+  `location` varchar(100) DEFAULT NULL COMMENT '去了的地点',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_place_finance_date` (`user_id`,`date`),
+  CONSTRAINT `user_place_finance_users_id_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户每日外出财务';
+/*!40101 SET character_set_client = @saved_cs_client */;

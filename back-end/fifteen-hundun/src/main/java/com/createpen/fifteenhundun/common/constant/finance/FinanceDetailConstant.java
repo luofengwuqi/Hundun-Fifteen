@@ -8,4 +8,5 @@ public class FinanceDetailConstant {
     */
     public static final String FINANCE_TITLE_FOOD = "饮食";
     public static final String FINANCE_TITLE_PAYMENT = "购物";
+    public static final String FINANCE_TITLE_PLACE = "外出";
 }
