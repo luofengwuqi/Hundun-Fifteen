@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Mapper
 public interface SleepHealthMapper {
@@ -17,6 +18,9 @@ public interface SleepHealthMapper {
 
     @Select("SELECT * FROM user_sleep_health WHERE user_id = #{userId} AND date = #{date}")
     UserSleepHealth selectByUserIdAndDate(Long userId, LocalDate date);
+
+    @Select("SELECT * FROM user_sleep_health WHERE user_id = #{userId} ORDER BY date DESC")
+    List<UserSleepHealth> selectAllByUserId(Long userId);
 
     @Update("UPDATE user_sleep_health SET quality = #{quality}, duration_min = #{durationMin} " +
             "WHERE user_id = #{userId} AND date = #{date}")

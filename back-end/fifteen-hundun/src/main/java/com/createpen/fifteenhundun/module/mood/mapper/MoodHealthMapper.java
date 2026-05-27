@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Mapper
 public interface MoodHealthMapper {
@@ -17,6 +18,9 @@ public interface MoodHealthMapper {
 
     @Select("SELECT * FROM user_mood_health WHERE user_id = #{userId} AND date = #{date}")
     UserMoodHealth selectByUserIdAndDate(Long userId, LocalDate date);
+
+    @Select("SELECT * FROM user_mood_health WHERE user_id = #{userId} ORDER BY date DESC")
+    List<UserMoodHealth> selectAllByUserId(Long userId);
 
     @Update("UPDATE user_mood_health SET mood = #{mood}, note = #{note} " +
             "WHERE user_id = #{userId} AND date = #{date}")
