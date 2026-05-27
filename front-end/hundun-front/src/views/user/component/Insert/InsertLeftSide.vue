@@ -40,9 +40,9 @@ const quickActions = [
   { label: '买了点啥', icon: '🛒' },
   { label: '睡得咋样', icon: '😴' },
   { label: '心情如何', icon: '💭' },
-  { label: '今日记录', icon: '🌟' },
+
   { label: '整点计划', icon: '📝' },
-  { label: '重要备忘', icon: '★' }
+  { label: '重要备忘', icon: '📌' }
 ]
 
 const handleQuickAction = (action) => {

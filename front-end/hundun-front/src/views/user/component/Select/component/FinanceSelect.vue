@@ -83,7 +83,7 @@ const filteredSections = computed(() => {
 
   let sections = financeStore.detailList.map((section) => ({
     title: section.title,
-    dataMap: { ...(section.dataMap || {}) }
+    dataMap: { ...section.dataMap }
   }))
 
   if (categoryFilter.value !== CATEGORY_ALL) {

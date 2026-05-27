@@ -456,3 +456,23 @@ UNLOCK TABLES;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2026-05-19 14:56:51
+
+--
+-- Table structure for table user_mood_health
+--
+
+DROP TABLE IF EXISTS `user_mood_health`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `user_mood_health` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `date` date NOT NULL COMMENT '心情记录日期',
+  `mood` tinyint NOT NULL COMMENT '心情等级：0很差 1差 2一般 3好 4很好',
+  `note` varchar(500) DEFAULT NULL COMMENT '心情备注',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_mood_date` (`user_id`,`date`),
+  CONSTRAINT `user_mood_health_users_id_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户每日心情';
+/*!40101 SET character_set_client = @saved_cs_client */;

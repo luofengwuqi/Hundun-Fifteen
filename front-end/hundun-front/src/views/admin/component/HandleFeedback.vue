@@ -231,7 +231,7 @@ const deleteHandledFeedback = async () => {
     await deleteHandledFeedbackAPI()
     // store 方法重新获取反馈列表
     await feedbackStore.fetchFeedback()
-    ElMessage.success('删除成功(´｡• ᵕ •｡\`)')
+    ElMessage.success('删除成功(´｡• ᵕ •｡`)')
   }catch ( error)
     {
       console.error('删除反馈失败:', error)

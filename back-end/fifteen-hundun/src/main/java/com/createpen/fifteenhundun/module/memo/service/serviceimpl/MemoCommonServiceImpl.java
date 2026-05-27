@@ -1,6 +1,7 @@
 package com.createpen.fifteenhundun.module.memo.service.serviceimpl;
 
 import com.createpen.fifteenhundun.common.context.BaseContext;
+import com.createpen.fifteenhundun.common.exception.MyException.SQLException;
 import com.createpen.fifteenhundun.module.memo.cache.MemoCommonRedisService;
 import com.createpen.fifteenhundun.module.memo.mapper.MemoCommonMapper;
 import com.createpen.fifteenhundun.module.memo.pojo.DTO.MemoCommonDTO;
@@ -67,8 +68,11 @@ public class MemoCommonServiceImpl implements MemoCommonService {
         MemoCommon memoCommon = new MemoCommon();
         BeanUtils.copyProperties(dto, memoCommon);
         memoCommon.setUserId(userId);
-
-        memoCommonMapper.updateMemoCommon(memoCommon);
+        try{
+            memoCommonMapper.updateMemoCommon(memoCommon);
+        }catch (Exception e){
+            throw new SQLException("操作失败,请检查任务是否开启");
+        }
         memoCommonRedisService.evictAll(userId, dto.getId());
         log.info("普通备忘更新成功, id: {}", dto.getId());
     }

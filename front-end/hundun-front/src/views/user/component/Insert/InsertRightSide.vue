@@ -8,6 +8,7 @@ import MemoCommon from './form/MemoCommon.vue'
 import MemoImportant from './form/MemoImportant.vue'
 import Payment from './form/Payment.vue'
 import SleepHealth from './form/SleepHealth.vue'
+import MoodHealth from './form/MoodHealth.vue'
 
 /** 与 CSS 中 --insert-panel-duration 保持一致 */
 const PANEL_TRANSITION_MS = 360
@@ -117,7 +118,25 @@ const componentsToShow = computed(() => {
     }
   }
   if (props.selectedActions.includes('心情如何')) {
-    console.log('TODO: 添加心情如何的组件')
+    if (!isHealthEnabled.value) {
+      if (!hiddenComponents.value.has('MoodFeatureDisabled')) {
+        components.push({
+          name: 'MoodFeatureDisabled',
+          component: FeatureDisabled,
+          props: {
+            title: '功能未启用 (灬º﹃º灬)',
+            message: '记录心情请先启用健康模块',
+            icon: '🔒'
+          }
+        })
+      }
+    } else if (!hiddenComponents.value.has('MoodHealth')) {
+      components.push({
+        name: 'MoodHealth',
+        component: MoodHealth,
+        onHide: () => handleHideComponent('MoodHealth')
+      })
+    }
   }
   if (props.selectedActions.includes('今日记录')) {
     console.log('TODO: 添加今日记录的组件')

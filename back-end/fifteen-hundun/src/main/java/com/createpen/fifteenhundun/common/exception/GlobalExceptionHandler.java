@@ -98,6 +98,12 @@ public class GlobalExceptionHandler {
         return Result.fail(400,msg);
     }
 
+    @ExceptionHandler
+    public Result<Void> handleSQLException(SQLException e) {
+        String msg = e.getMessage();
+        return Result.fail(400,msg);
+    }
+
 //    @ExceptionHandler(org.springframework.data.redis.RedisConnectionFailureException.class)
 //    public Result<Void> handleRedisConnectionFailureException(org.springframework.data.redis.RedisConnectionFailureException e) {
 //        log.error("Redis连接失败:{}", e.getMessage());
