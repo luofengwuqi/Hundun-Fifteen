@@ -47,6 +47,30 @@ const showChart = computed(() => chartEntries.value.length > 0)
 /* ---------- ECharts ---------- */
 const chartDomRef = ref(null)
 let chartInstance = null
+let resizeObserver = null
+
+/* ---------- 工具：等待 DOM 元素拥有有效尺寸 ---------- */
+const waitContainerReady = (dom, maxRetries = 10, interval = 50) => {
+  return new Promise((resolve) => {
+    if (dom && dom.clientWidth > 0 && dom.clientHeight > 0) {
+      resolve(true)
+      return
+    }
+    let retries = 0
+    const timer = setInterval(() => {
+      retries++
+      if (dom && dom.clientWidth > 0 && dom.clientHeight > 0) {
+        clearInterval(timer)
+        resolve(true)
+        return
+      }
+      if (retries >= maxRetries) {
+        clearInterval(timer)
+        resolve(false)
+      }
+    }, interval)
+  })
+}
 
 const buildOption = () => {
   const entries = chartEntries.value
@@ -134,19 +158,51 @@ const buildOption = () => {
   }
 }
 
-const initChart = async () => {
-  await nextTick()
-  if (!chartDomRef.value) return
-  if (chartInstance) chartInstance.dispose()
-  chartInstance = echarts.init(chartDomRef.value)
-  chartInstance.setOption(buildOption())
+/** 销毁图表实例并清理 ResizeObserver */
+const disposeChart = () => {
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+  if (chartInstance) {
+    chartInstance.dispose()
+    chartInstance = null
+  }
 }
 
+/** 初始化 / 重新初始化图表 */
+const initChart = async () => {
+  disposeChart()
+  await nextTick()
+  const dom = chartDomRef.value
+  if (!dom) return
+
+  // 等容器拥有有效尺寸后再初始化 ECharts
+  const ready = await waitContainerReady(dom)
+  if (!ready) {
+    // 如果超时仍无尺寸，先用一个兜底尺寸初始化，ResizeObserver 后续会纠正
+    console.warn('[StepsPuzzle] chart container size is 0, init with fallback')
+  }
+
+  chartInstance = echarts.init(dom)
+  chartInstance.setOption(buildOption())
+
+  // 使用 ResizeObserver 自动跟随容器尺寸变化
+  if (!resizeObserver) {
+    resizeObserver = new ResizeObserver(() => {
+      if (chartInstance) chartInstance.resize()
+    })
+  }
+  resizeObserver.observe(dom)
+}
+
+/** 仅更新图表配置（不重新初始化） */
 const updateChart = () => {
   if (!chartInstance) return
   chartInstance.setOption(buildOption(), true)
 }
 
+/** 执行 resize（ResizeObserver 已覆盖大部分场景，此方法作为补充） */
 const resizeChart = () => {
   if (chartInstance) chartInstance.resize()
 }
@@ -161,11 +217,7 @@ watch(showChart, async (val) => {
       updateChart()
     }
   } else {
-    // DOM 移除时销毁实例
-    if (chartInstance) {
-      chartInstance.dispose()
-      chartInstance = null
-    }
+    disposeChart()
   }
 })
 
@@ -174,12 +226,19 @@ watch(chartEntries, () => {
   if (chartInstance) updateChart()
 }, { deep: true })
 
-// 展开态变化 → 更新 + resize
+// 展开态变化 → 更新配置，并在浏览器完成布局后 resize
 watch(() => props.expanded, async () => {
+  // 先让 DOM 更新
   await nextTick()
+  // 再等一帧让浏览器完成布局重排
+  await new Promise((resolve) => requestAnimationFrame(resolve))
+
   if (chartInstance) {
     updateChart()
     resizeChart()
+  } else if (chartDomRef.value && showChart.value) {
+    // 图表尚未初始化（极少情况），重新初始化
+    initChart()
   }
 })
 
@@ -189,10 +248,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', resizeChart)
-  if (chartInstance) {
-    chartInstance.dispose()
-    chartInstance = null
-  }
+  disposeChart()
 })
 </script>
 
@@ -425,7 +481,7 @@ onUnmounted(() => {
 
 .chart-dom {
   flex: 1;
-  min-height: 0;
+  min-height: 80px;
   width: 100%;
 }
 </style>
