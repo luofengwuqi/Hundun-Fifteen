@@ -50,8 +50,8 @@ const filteredTimeline = computed(() => {
         )
       case 'custom': {
         if (dateRangeStart.value && d < parseDate(dateRangeStart.value)) return false
-        if (dateRangeEnd.value && d > parseDate(dateRangeEnd.value)) return false
-        return true
+        return !(dateRangeEnd.value && d > parseDate(dateRangeEnd.value));
+
       }
       default:
         return true
@@ -192,39 +192,41 @@ onMounted(() => {
               </button>
             </div>
 
-            <div v-if="financeStore.expandedDate === day.date" class="day-detail">
-              <p v-if="financeStore.loadingDetail" class="detail-hint">加载明细…</p>
-              <p v-else-if="filteredSections.length === 0" class="detail-hint">
-                无符合筛选的记录
-              </p>
+            <Transition name="detail-expand">
+              <div v-if="financeStore.expandedDate === day.date" class="day-detail">
+                <p v-if="financeStore.loadingDetail" class="detail-hint">加载明细…</p>
+                <p v-else-if="filteredSections.length === 0" class="detail-hint">
+                  无符合筛选的记录
+                </p>
 
-              <template v-else>
-                <ul class="detail-tree">
-                  <li
-                    v-for="section in filteredSections"
-                    :key="section.title"
-                    class="tree-branch"
-                  >
-                    <p class="branch-head">{{ section.title }}</p>
-                    <ul
-                      v-if="Object.keys(section.dataMap).length"
-                      class="branch-children"
+                <template v-else>
+                  <ul class="detail-tree">
+                    <li
+                      v-for="section in filteredSections"
+                      :key="section.title"
+                      class="tree-branch"
                     >
-                      <li
-                        v-for="(price, name) in section.dataMap"
-                        :key="name"
-                        class="tree-leaf"
+                      <p class="branch-head">{{ section.title }}</p>
+                      <ul
+                        v-if="Object.keys(section.dataMap).length"
+                        class="branch-children"
                       >
-                        <div class="leaf-content">
-                          <span class="leaf-label">{{ name }}</span>
-                          <span class="leaf-amount">{{ formatMoney(price) }} 元</span>
-                        </div>
-                      </li>
-                    </ul>
-                  </li>
-                </ul>
-              </template>
-            </div>
+                        <li
+                          v-for="(price, name) in section.dataMap"
+                          :key="name"
+                          class="tree-leaf"
+                        >
+                          <div class="leaf-content">
+                            <span class="leaf-label">{{ name }}</span>
+                            <span class="leaf-amount">{{ formatMoney(price) }} 元</span>
+                          </div>
+                        </li>
+                      </ul>
+                    </li>
+                  </ul>
+                </template>
+              </div>
+            </Transition>
           </li>
         </ul>
       </div>
@@ -378,16 +380,17 @@ onMounted(() => {
   margin: 0;
   padding: 0 0 0 6px;
   position: relative;
+  display: flow-root;
 
   &::before {
     content: '';
     position: absolute;
     left: 11px;
     top: 8px;
-    bottom: 8px;
-    width: 2px;
+    bottom: 10px;
+    width: 3px;
     background: var(--line);
-    border-radius: 1px;
+    border-radius: 1.5px;
   }
 }
 
@@ -411,6 +414,7 @@ onMounted(() => {
   &.open .day-label {
     color: var(--text);
     font-weight: 600;
+    font-size: 20px;
   }
 
   &.open .day-total {
@@ -476,11 +480,12 @@ onMounted(() => {
 .day-detail {
   --tree-line: #e0d8c8;
   --tree-indent: 26px;
-  --tree-spine: 1px;
+  --tree-spine: 2px;
   --price-width: 5.5em;
 
-  margin: 8px 0 20px 18px;
+  margin: 8px 0 20px 11px;
   padding: 2px 16px 10px 0;
+  clip-path: inset(0 0 0 0);
 }
 
 .detail-hint {
@@ -498,7 +503,6 @@ onMounted(() => {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  border-left: var(--tree-spine) solid var(--tree-line);
 }
 
 .tree-branch {
@@ -513,8 +517,8 @@ onMounted(() => {
 .branch-head {
   position: relative;
   margin: 0;
-  padding: 10px 0 8px var(--tree-indent);
-  font-size: 14px;
+  padding: 12px 0 10px var(--tree-indent);
+  font-size: 19px;
   font-weight: 600;
   line-height: 1.4;
   color: var(--text);
@@ -535,7 +539,7 @@ onMounted(() => {
 .branch-children {
   list-style: none;
   margin: 0 0 4px calc(var(--tree-indent) - 10px);
-  padding: 2px 0 6px calc(var(--tree-indent) + 4px);
+  padding: 2px 0 0 calc(var(--tree-indent) + 4px);
   position: relative;
   border-left: var(--tree-spine) solid var(--tree-line);
 }
@@ -547,29 +551,27 @@ onMounted(() => {
     margin-top: 2px;
   }
 
-  /* 圆角 L 形横枝 */
+  /* 直线横枝（与分类标题一致） */
   &::before {
     content: '';
     position: absolute;
     left: calc(-1 * (var(--tree-indent) + 4px));
     top: 50%;
     width: calc(var(--tree-indent) - 2px);
-    height: 11px;
-    border-left: var(--tree-spine) solid var(--tree-line);
-    border-bottom: var(--tree-spine) solid var(--tree-line);
-    border-bottom-left-radius: 8px;
-    transform: translateY(-6px);
+    height: var(--tree-spine);
+    background: var(--tree-line);
+    transform: translateY(-50%);
     pointer-events: none;
   }
 
-  /* 末项下方不延长竖线 */
+  /* 末项下方不延长 inner 竖线 */
   &:last-child::after {
     content: '';
     position: absolute;
-    left: calc(-1 * (var(--tree-indent) + 5px));
+    left: calc(-1 * (var(--tree-indent) + 4px + var(--tree-spine)));
     top: calc(50% + 4px);
     bottom: -6px;
-    width: 3px;
+    width: calc(var(--tree-spine) + 2px);
     background: var(--bg);
   }
 }
@@ -579,12 +581,12 @@ onMounted(() => {
   grid-template-columns: minmax(0, 1fr) var(--price-width);
   align-items: center;
   column-gap: 24px;
-  min-height: 36px;
-  padding: 2px 0;
+  min-height: 42px;
+  padding: 4px 0;
 }
 
 .leaf-label {
-  font-size: 14px;
+  font-size: 18px;
   color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -593,7 +595,7 @@ onMounted(() => {
 
 .leaf-amount {
   text-align: right;
-  font-size: 13px;
+  font-size: 17px;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -730,6 +732,25 @@ onMounted(() => {
   &::placeholder {
     color: var(--text-muted);
   }
+}
+
+/* 展开/收起过渡动画 —— 模拟时间轴拉长拉开 */
+.detail-expand-enter-active {
+  transition: clip-path 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              opacity 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  clip-path: inset(0 0 0 0);
+}
+.detail-expand-leave-active {
+  transition: clip-path 0.3s cubic-bezier(0.55, 0.06, 0.68, 0.19),
+              opacity 0.15s cubic-bezier(0.55, 0.06, 0.68, 0.19);
+}
+.detail-expand-enter-from {
+  clip-path: inset(0 0 100% 0);
+  opacity: 0;
+}
+.detail-expand-leave-to {
+  clip-path: inset(100% 0 0 0);
+  opacity: 0;
 }
 
 @media (max-width: 768px) {
