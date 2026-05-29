@@ -11,6 +11,13 @@ const timeFilter = ref('all')
 const dateRangeStart = ref('')
 const dateRangeEnd = ref('')
 
+// 当前展开的拼图组件：null | 'mood' | 'sleep' | 'steps'
+const expandedPuzzle = ref(null)
+
+const handleToggleExpand = (type) => {
+  expandedPuzzle.value = expandedPuzzle.value === type ? null : type
+}
+
 const filterOptions = [
   { value: 'all', label: '全部' },
   { value: '7d', label: '近 7 天' },
@@ -100,17 +107,51 @@ onMounted(() => {
       </div>
     </header>
 
-    <div class="puzzle-grid">
-      <div class="puzzle-cell">
-        <MoodPuzzle :summary="healthStore.moodSummary" :loading="healthStore.loadingMood" />
+    <div class="puzzle-grid" :class="{ 'has-expanded': !!expandedPuzzle }">
+      <!-- 心情拼图 -->
+      <div
+        v-show="!expandedPuzzle || expandedPuzzle === 'mood'"
+        class="puzzle-cell puzzle-cell-collapsible"
+        :class="{ 'puzzle-cell-expanded': expandedPuzzle === 'mood' }"
+      >
+        <MoodPuzzle
+          :summary="healthStore.moodSummary"
+          :loading="healthStore.loadingMood"
+          :expanded="expandedPuzzle === 'mood'"
+          @toggle-expand="handleToggleExpand('mood')"
+        />
       </div>
-      <div class="puzzle-cell">
-        <SleepPuzzle :summary="healthStore.sleepSummary" :loading="healthStore.loadingSleep" />
+
+      <!-- 睡眠拼图 -->
+      <div
+        v-show="!expandedPuzzle || expandedPuzzle === 'sleep'"
+        class="puzzle-cell puzzle-cell-collapsible"
+        :class="{ 'puzzle-cell-expanded': expandedPuzzle === 'sleep' }"
+      >
+        <SleepPuzzle
+          :summary="healthStore.sleepSummary"
+          :loading="healthStore.loadingSleep"
+          :expanded="expandedPuzzle === 'sleep'"
+          @toggle-expand="handleToggleExpand('sleep')"
+        />
       </div>
-      <div class="puzzle-cell puzzle-cell-full">
-        <StepsPuzzle :summary="healthStore.stepsSummary" :loading="healthStore.loadingSteps" />
+
+      <!-- 步数拼图 -->
+      <div
+        v-show="!expandedPuzzle || expandedPuzzle === 'steps'"
+        class="puzzle-cell puzzle-cell-full puzzle-cell-collapsible"
+        :class="{ 'puzzle-cell-expanded': expandedPuzzle === 'steps' }"
+      >
+        <StepsPuzzle
+          :summary="healthStore.stepsSummary"
+          :loading="healthStore.loadingSteps"
+          :expanded="expandedPuzzle === 'steps'"
+          @toggle-expand="handleToggleExpand('steps')"
+        />
       </div>
-      <div class="puzzle-cell puzzle-cell-full">
+
+      <!-- 饮食占位 -->
+      <div v-show="!expandedPuzzle" class="puzzle-cell puzzle-cell-full puzzle-cell-collapsible">
         <div class="food-placeholder">
           <span class="food-icon">🍜</span>
           <span class="food-label">饮食拼图</span>
@@ -263,6 +304,15 @@ onMounted(() => {
   grid-template-columns: 1fr 1fr;
   gap: 16px;
   align-content: start;
+  transition: grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              gap 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &.has-expanded {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+    align-content: stretch;
+    gap: 0;
+  }
 }
 
 .puzzle-cell {
@@ -271,8 +321,29 @@ onMounted(() => {
   flex-direction: column;
 }
 
+.puzzle-cell-collapsible {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.puzzle-cell-expanded {
+  grid-column: 1 / -1;
+  min-height: 0;
+  animation: cellExpandIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 .puzzle-cell-full {
   grid-column: 1 / -1;
+}
+
+@keyframes cellExpandIn {
+  from {
+    opacity: 0.8;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .food-placeholder {

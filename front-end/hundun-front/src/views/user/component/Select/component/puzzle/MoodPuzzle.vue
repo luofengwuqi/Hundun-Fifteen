@@ -3,8 +3,23 @@ import { computed } from 'vue'
 
 const props = defineProps({
   summary: { type: Object, default: null },
-  loading: { type: Boolean, default: false }
+  loading: { type: Boolean, default: false },
+  expanded: { type: Boolean, default: false }
 })
+
+const emit = defineEmits(['toggle-expand'])
+
+const hasData = computed(() => props.summary && props.summary.totalDays > 0)
+
+const handleCardClick = () => {
+  if (!props.expanded && hasData.value) {
+    emit('toggle-expand')
+  }
+}
+
+const handleClose = () => {
+  emit('toggle-expand')
+}
 
 const MOOD_EMOJI = ['😫', '😔', '😐', '😊', '😄']
 const MOOD_LABELS = ['很差', '差', '一般', '好', '很好']
@@ -47,13 +62,11 @@ const distributionList = computed(() => {
   }))
 })
 
-const totalDistCount = computed(() => {
-  return distributionList.value.reduce((s, d) => s + d.count, 0)
-})
-
 const latestEntries = computed(() => {
   if (!props.summary || !props.summary.entries) return []
-  return props.summary.entries.slice(0, 3)
+  return props.expanded
+    ? props.summary.entries
+    : props.summary.entries.slice(0, 3)
 })
 
 const formatDate = (dateStr) => {
@@ -64,7 +77,21 @@ const formatDate = (dateStr) => {
 </script>
 
 <template>
-  <div class="mood-puzzle">
+  <div
+    class="mood-puzzle"
+    :class="{ expanded: expanded, clickable: !expanded && hasData }"
+    @click="handleCardClick"
+  >
+    <!-- 展开态关闭按钮 -->
+    <button
+      v-if="expanded"
+      class="close-btn"
+      title="收起"
+      @click.stop="handleClose"
+    >
+      ✕
+    </button>
+
     <div v-if="loading" class="puzzle-loading">
       <span class="loading-spinner" />
       <span>加载中...</span>
@@ -111,7 +138,7 @@ const formatDate = (dateStr) => {
         </div>
       </div>
 
-      <div v-if="latestEntries.length" class="latest-section">
+      <div v-if="latestEntries.length" class="latest-section" :class="{ expanded: expanded }">
         <div v-for="entry in latestEntries" :key="entry.date" class="latest-item">
           <span class="latest-date">{{ formatDate(entry.date) }}</span>
           <span class="latest-mood">{{ MOOD_EMOJI[entry.mood] }}</span>
@@ -131,6 +158,7 @@ const formatDate = (dateStr) => {
   --accent: #c3272b;
   --bg-soft: #fff8e8;
 
+  position: relative;
   height: 100%;
   min-height: 0;
   display: flex;
@@ -140,6 +168,66 @@ const formatDate = (dateStr) => {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: 12px;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+
+  &.clickable {
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 20px rgba(195, 39, 43, 0.12);
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  &.expanded {
+    padding: 24px 28px;
+    gap: 16px;
+  }
+}
+
+/* 关闭按钮 */
+.close-btn {
+  position: absolute;
+  top: -14px;
+  right: 14px;
+  z-index: 10;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--card-border);
+  border-radius: 50%;
+  background: var(--card-bg);
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  animation: closeBtnIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    transform: rotate(90deg);
+  }
+}
+
+@keyframes closeBtnIn {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .puzzle-loading,
@@ -200,13 +288,21 @@ const formatDate = (dateStr) => {
   color: var(--accent);
   line-height: 1;
   letter-spacing: -1px;
+  transition: font-size 0.35s ease;
 }
-.avg-emoji { font-size: 22px; }
+.avg-emoji {
+  font-size: 22px;
+  transition: font-size 0.35s ease;
+}
 .avg-label {
   font-size: 12px;
   color: var(--text-muted);
   font-weight: 500;
 }
+
+/* 展开时放大核心数值 */
+.expanded .avg-value { font-size: 40px; }
+.expanded .avg-emoji { font-size: 28px; }
 
 .dist-section {
   display: flex;
@@ -219,7 +315,9 @@ const formatDate = (dateStr) => {
   border-radius: 5px;
   overflow: hidden;
   background: #f5f5f5;
+  transition: height 0.35s ease;
 }
+.expanded .dist-bar { height: 14px; }
 .dist-segment {
   transition: flex 0.3s ease;
   border-radius: 5px;
@@ -232,7 +330,9 @@ const formatDate = (dateStr) => {
   font-size: 10px;
   color: var(--text-muted);
   line-height: 1.2;
+  transition: font-size 0.35s ease;
 }
+.expanded .dist-label { font-size: 12px; }
 
 .latest-section {
   display: flex;
@@ -241,7 +341,42 @@ const formatDate = (dateStr) => {
   margin-top: auto;
   padding-top: 10px;
   border-top: 1px solid var(--bg-soft);
+  min-height: 0;
+  transition: all 0.35s ease;
+
+  &.expanded {
+    flex: 1;
+    overflow-y: auto;
+    margin-top: 0;
+    gap: 8px;
+    padding-top: 14px;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: var(--card-border);
+      border-radius: 2px;
+    }
+
+    .latest-item {
+      font-size: 14px;
+      gap: 10px;
+      padding: 4px 0;
+      animation: itemFadeIn 0.35s ease both;
+    }
+
+    .latest-date {
+      width: 40px;
+      font-size: 12px;
+    }
+
+    .latest-mood {
+      font-size: 18px;
+    }
+  }
 }
+
 .latest-item {
   display: flex;
   align-items: center;
@@ -260,5 +395,16 @@ const formatDate = (dateStr) => {
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+}
+
+@keyframes itemFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

@@ -1,25 +1,35 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import * as echarts from 'echarts'
 
 const props = defineProps({
   summary: { type: Object, default: null },
-  loading: { type: Boolean, default: false }
+  loading: { type: Boolean, default: false },
+  expanded: { type: Boolean, default: false }
 })
 
-const hoveredBar = ref(null)
+const emit = defineEmits(['toggle-expand'])
 
+/* ---------- 展开 / 收起 ---------- */
+const hasData = computed(() => props.summary && props.summary.totalDays > 0)
+
+const handleCardClick = () => {
+  if (!props.expanded && hasData.value) {
+    emit('toggle-expand')
+  }
+}
+
+const handleClose = () => {
+  emit('toggle-expand')
+}
+
+/* ---------- 数据 ---------- */
 const chartEntries = computed(() => {
   if (!props.summary || !props.summary.entries) return []
   return [...props.summary.entries].sort(
     (a, b) => new Date(a.date) - new Date(b.date)
   )
 })
-
-const maxSteps = computed(() => {
-  return Math.max(...chartEntries.value.map(e => e.steps || 0), 1)
-})
-
-const barCount = computed(() => chartEntries.value.length)
 
 const formatShortDate = (dateStr) => {
   if (!dateStr) return ''
@@ -32,18 +42,176 @@ const formatSteps = (n) => {
   return n.toLocaleString()
 }
 
-const showBars = computed(() => chartEntries.value.length > 0)
+const showChart = computed(() => chartEntries.value.length > 0)
 
-const labelInterval = computed(() => {
-  const count = barCount.value
-  if (count <= 10) return 1
-  if (count <= 20) return 2
-  return Math.ceil(count / 10)
+/* ---------- ECharts ---------- */
+const chartDomRef = ref(null)
+let chartInstance = null
+
+const buildOption = () => {
+  const entries = chartEntries.value
+  if (entries.length === 0) return {}
+
+  const dates = entries.map(e => e.date)
+  const steps = entries.map(e => e.steps || 0)
+
+  return {
+    grid: {
+      left: 50,
+      right: 10,
+      top: 8,
+      bottom: 8
+    },
+    xAxis: {
+      type: 'category',
+      data: dates,
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: {
+        show: true,
+        fontSize: 10,
+        color: '#999',
+        formatter: (val) => formatShortDate(val),
+        interval: props.expanded ? 0 : 'auto'
+      }
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: { show: false },
+      axisTick: { show: false },
+      splitLine: {
+        lineStyle: { color: '#f0ebe0', type: 'dashed' }
+      },
+      axisLabel: {
+        fontSize: 10,
+        color: '#999',
+        formatter: (val) => formatSteps(val)
+      }
+    },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: '#333',
+      borderColor: '#333',
+      textStyle: { color: '#fff', fontSize: 12 },
+      formatter: (params) => {
+        if (!params || params.length === 0) return ''
+        const p = params[0]
+        const entry = entries[p.dataIndex]
+        const lines = [
+          `<strong>${entry.date}</strong>`,
+          `👣 ${formatSteps(entry.steps)} 步`
+        ]
+        if (entry.location) lines.push(`📍 ${entry.location}`)
+        if (entry.transportMode) lines.push(`🚌 ${entry.transportMode}`)
+        return lines.join('<br/>')
+      }
+    },
+    series: [
+      {
+        type: 'line',
+        data: steps,
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 5,
+        showSymbol: entries.length <= 30,
+        lineStyle: {
+          color: '#c3272b',
+          width: 2
+        },
+        itemStyle: {
+          color: '#c3272b',
+          borderColor: '#fff',
+          borderWidth: 1.5
+        },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(195, 39, 43, 0.15)' },
+            { offset: 1, color: 'rgba(195, 39, 43, 0.01)' }
+          ])
+        }
+      }
+    ]
+  }
+}
+
+const initChart = async () => {
+  await nextTick()
+  if (!chartDomRef.value) return
+  if (chartInstance) chartInstance.dispose()
+  chartInstance = echarts.init(chartDomRef.value)
+  chartInstance.setOption(buildOption())
+}
+
+const updateChart = () => {
+  if (!chartInstance) return
+  chartInstance.setOption(buildOption(), true)
+}
+
+const resizeChart = () => {
+  if (chartInstance) chartInstance.resize()
+}
+
+// 当数据就绪且 DOM 出现时，初始化图表
+watch(showChart, async (val) => {
+  if (val) {
+    await nextTick()
+    if (!chartInstance && chartDomRef.value) {
+      initChart()
+    } else {
+      updateChart()
+    }
+  } else {
+    // DOM 移除时销毁实例
+    if (chartInstance) {
+      chartInstance.dispose()
+      chartInstance = null
+    }
+  }
+})
+
+// 数据变化 → 更新图表（图表已存在时）
+watch(chartEntries, () => {
+  if (chartInstance) updateChart()
+}, { deep: true })
+
+// 展开态变化 → 更新 + resize
+watch(() => props.expanded, async () => {
+  await nextTick()
+  if (chartInstance) {
+    updateChart()
+    resizeChart()
+  }
+})
+
+onMounted(() => {
+  window.addEventListener('resize', resizeChart)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', resizeChart)
+  if (chartInstance) {
+    chartInstance.dispose()
+    chartInstance = null
+  }
 })
 </script>
 
 <template>
-  <div class="steps-puzzle">
+  <div
+    class="steps-puzzle"
+    :class="{ expanded: expanded, clickable: !expanded && hasData }"
+    @click="handleCardClick"
+  >
+    <!-- 展开态关闭按钮 -->
+    <button
+      v-if="expanded"
+      class="close-btn"
+      title="收起"
+      @click.stop="handleClose"
+    >
+      ✕
+    </button>
+
     <div v-if="loading" class="puzzle-loading">
       <span class="loading-spinner" />
       <span>加载中...</span>
@@ -76,44 +244,10 @@ const labelInterval = computed(() => {
         </div>
       </div>
 
-      <div class="chart-area">
-        <div v-if="!showBars" class="chart-empty">区间内无步数数据</div>
-
-        <div v-else class="bar-chart" @mouseleave="hoveredBar = null">
-          <div
-            v-for="(entry, idx) in chartEntries"
-            :key="entry.date"
-            class="bar-column"
-            @mouseenter="hoveredBar = entry"
-          >
-            <div
-              class="bar-fill"
-              :class="{ 'is-hovered': hoveredBar === entry }"
-              :style="{ height: (entry.steps / maxSteps) * 100 + '%' }"
-            />
-          </div>
-        </div>
-
-        <div v-if="showBars" class="x-labels">
-          <span
-            v-for="(entry, idx) in chartEntries"
-            :key="'x'+entry.date"
-            class="x-label"
-            :class="{ 'is-visible': idx % labelInterval === 0 }"
-          >{{ formatShortDate(entry.date) }}</span>
-        </div>
-
-        <transition name="tooltip-fade">
-          <div
-            v-if="hoveredBar"
-            class="bar-tooltip"
-          >
-            <p class="tip-date">{{ hoveredBar.date }}</p>
-            <p class="tip-steps">👣 {{ formatSteps(hoveredBar.steps) }} 步</p>
-            <p v-if="hoveredBar.location" class="tip-loc">📍 {{ hoveredBar.location }}</p>
-            <p v-if="hoveredBar.transportMode" class="tip-trans">🚌 {{ hoveredBar.transportMode }}</p>
-          </div>
-        </transition>
+      <!-- ECharts 折线图 -->
+      <div class="chart-area" :class="{ expanded: expanded }">
+        <div v-if="!showChart" class="chart-empty">区间内无步数数据</div>
+        <div v-else ref="chartDomRef" class="chart-dom" />
       </div>
     </template>
   </div>
@@ -126,18 +260,71 @@ const labelInterval = computed(() => {
   --text: #333333;
   --text-muted: #999999;
   --accent: #c3272b;
-  --accent-light: rgba(195, 39, 43, 0.30);
   --bg-soft: #fff8e8;
 
+  position: relative;
   height: 100%;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 18px 20px;
+  gap: 8px;
+  padding: 14px 18px;
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: 12px;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+
+  &.clickable {
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 20px rgba(195, 39, 43, 0.12);
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  &.expanded {
+    padding: 24px 28px;
+    gap: 12px;
+  }
+}
+
+.close-btn {
+  position: absolute;
+  top: -14px;
+  right: 14px;
+  z-index: 10;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--card-border);
+  border-radius: 50%;
+  background: var(--card-bg);
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  animation: closeBtnIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    transform: rotate(90deg);
+  }
+}
+
+@keyframes closeBtnIn {
+  from { opacity: 0; transform: scale(0.5); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .puzzle-loading,
@@ -191,7 +378,7 @@ const labelInterval = computed(() => {
   align-items: center;
   justify-content: center;
   gap: 24px;
-  padding: 6px 0;
+  padding: 2px 0;
 }
 .stat-item {
   display: flex;
@@ -200,10 +387,11 @@ const labelInterval = computed(() => {
   gap: 2px;
 }
 .stat-value {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--accent);
   line-height: 1;
+  transition: font-size 0.35s ease;
 }
 .stat-label {
   font-size: 11px;
@@ -215,12 +403,16 @@ const labelInterval = computed(() => {
   background: var(--card-border);
 }
 
+.expanded .stat-value { font-size: 26px; }
+
+// ============ 图表 ============
 .chart-area {
   flex: 1;
   min-height: 0;
   position: relative;
   display: flex;
   flex-direction: column;
+  transition: all 0.35s ease;
 }
 .chart-empty {
   flex: 1;
@@ -231,89 +423,9 @@ const labelInterval = computed(() => {
   color: var(--text-muted);
 }
 
-.bar-chart {
+.chart-dom {
   flex: 1;
-  display: flex;
-  align-items: flex-end;
-  gap: 3px;
-  min-height: 100px;
-  padding: 0 2px;
-  overflow-x: auto;
-  overflow-y: visible;
-
-  &::-webkit-scrollbar { height: 4px; }
-  &::-webkit-scrollbar-thumb { background: var(--line); border-radius: 2px; }
-}
-.bar-column {
-  flex: 1;
-  min-width: 8px;
-  max-width: 40px;
-  display: flex;
-  align-items: flex-end;
-  cursor: pointer;
-  position: relative;
-}
-.bar-fill {
+  min-height: 0;
   width: 100%;
-  background: linear-gradient(to top, var(--accent), rgba(195, 39, 43, 0.60));
-  border-radius: 3px 3px 0 0;
-  transition: opacity 0.2s, transform 0.2s;
-  min-height: 2px;
-  opacity: 0.75;
-}
-.bar-fill:hover,
-.bar-fill.is-hovered {
-  opacity: 1;
-  transform: scaleX(1.08);
-}
-
-.x-labels {
-  display: flex;
-  gap: 3px;
-  margin-top: 6px;
-  padding: 0 2px;
-}
-.x-label {
-  flex: 1;
-  text-align: center;
-  font-size: 9px;
-  color: var(--text-muted);
-  white-space: nowrap;
-  min-width: 0;
-  &:not(.is-visible) {
-    visibility: hidden;
-  }
-}
-
-.bar-tooltip {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%) translateY(-100%);
-  margin-top: -8px;
-  background: #333;
-  color: #fff;
-  font-size: 12px;
-  line-height: 1.5;
-  padding: 8px 12px;
-  border-radius: 8px;
-  white-space: nowrap;
-  z-index: 10;
-  pointer-events: none;
-
-  p { margin: 0; }
-  .tip-date { font-weight: 600; margin-bottom: 2px; }
-  .tip-steps,
-  .tip-loc,
-  .tip-trans { opacity: 0.85; }
-}
-
-.tooltip-fade-enter-active,
-.tooltip-fade-leave-active {
-  transition: opacity 0.15s ease;
-}
-.tooltip-fade-enter-from,
-.tooltip-fade-leave-to {
-  opacity: 0;
 }
 </style>

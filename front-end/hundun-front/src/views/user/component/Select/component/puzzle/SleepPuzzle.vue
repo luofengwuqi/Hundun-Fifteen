@@ -3,8 +3,23 @@ import { computed } from 'vue'
 
 const props = defineProps({
   summary: { type: Object, default: null },
-  loading: { type: Boolean, default: false }
+  loading: { type: Boolean, default: false },
+  expanded: { type: Boolean, default: false }
 })
+
+const emit = defineEmits(['toggle-expand'])
+
+const hasData = computed(() => props.summary && props.summary.totalDays > 0)
+
+const handleCardClick = () => {
+  if (!props.expanded && hasData.value) {
+    emit('toggle-expand')
+  }
+}
+
+const handleClose = () => {
+  emit('toggle-expand')
+}
 
 const QUALITY_EMOJI = ['😴', '😐', '😊']
 const QUALITY_LABELS = ['差', '一般', '好']
@@ -48,16 +63,13 @@ const distributionList = computed(() => {
   }))
 })
 
-const totalDistCount = computed(() => {
-  return distributionList.value.reduce((s, d) => s + d.count, 0)
-})
-
 const chartEntries = computed(() => {
   if (!props.summary || !props.summary.entries) return []
   const sorted = [...props.summary.entries].sort(
     (a, b) => new Date(a.date) - new Date(b.date)
   )
-  return sorted.slice(-14)
+  // 展开时展示全部，收起时展示近 14 条
+  return props.expanded ? sorted : sorted.slice(-14)
 })
 
 const maxDuration = computed(() => {
@@ -72,7 +84,21 @@ const formatShortDate = (dateStr) => {
 </script>
 
 <template>
-  <div class="sleep-puzzle">
+  <div
+    class="sleep-puzzle"
+    :class="{ expanded: expanded, clickable: !expanded && hasData }"
+    @click="handleCardClick"
+  >
+    <!-- 展开态关闭按钮 -->
+    <button
+      v-if="expanded"
+      class="close-btn"
+      title="收起"
+      @click.stop="handleClose"
+    >
+      ✕
+    </button>
+
     <div v-if="loading" class="puzzle-loading">
       <span class="loading-spinner" />
       <span>加载中...</span>
@@ -124,7 +150,7 @@ const formatShortDate = (dateStr) => {
         </div>
       </div>
 
-      <div v-if="chartEntries.length" class="chart-section">
+      <div v-if="chartEntries.length" class="chart-section" :class="{ expanded: expanded }">
         <span class="chart-title">时长趋势</span>
         <div class="mini-chart">
           <div
@@ -154,6 +180,7 @@ const formatShortDate = (dateStr) => {
   --accent: #c3272b;
   --bg-soft: #fff8e8;
 
+  position: relative;
   height: 100%;
   min-height: 0;
   display: flex;
@@ -163,6 +190,59 @@ const formatShortDate = (dateStr) => {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: 12px;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+
+  &.clickable {
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 20px rgba(195, 39, 43, 0.12);
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  &.expanded {
+    padding: 24px 28px;
+    gap: 16px;
+  }
+}
+
+.close-btn {
+  position: absolute;
+  top: -14px;
+  right: 14px;
+  z-index: 10;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--card-border);
+  border-radius: 50%;
+  background: var(--card-bg);
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  animation: closeBtnIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    transform: rotate(90deg);
+  }
+}
+
+@keyframes closeBtnIn {
+  from { opacity: 0; transform: scale(0.5); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .puzzle-loading,
@@ -228,6 +308,7 @@ const formatShortDate = (dateStr) => {
   color: var(--accent);
   line-height: 1;
   letter-spacing: -0.5px;
+  transition: font-size 0.35s ease;
 }
 .avg-label {
   font-size: 11px;
@@ -241,12 +322,15 @@ const formatShortDate = (dateStr) => {
   background: var(--bg-soft);
   border-radius: 8px;
 }
-.quality-emoji { font-size: 16px; }
+.quality-emoji { font-size: 16px; transition: font-size 0.35s ease; }
 .quality-label {
   font-size: 12px;
   color: var(--text);
   font-weight: 500;
 }
+
+.expanded .avg-value { font-size: 30px; }
+.expanded .quality-emoji { font-size: 20px; }
 
 .dist-section {
   display: flex;
@@ -259,7 +343,9 @@ const formatShortDate = (dateStr) => {
   border-radius: 5px;
   overflow: hidden;
   background: #f5f5f5;
+  transition: height 0.35s ease;
 }
+.expanded .dist-bar { height: 14px; }
 .dist-segment {
   transition: flex 0.3s ease;
   border-radius: 5px;
@@ -272,12 +358,32 @@ const formatShortDate = (dateStr) => {
   font-size: 10px;
   color: var(--text-muted);
   line-height: 1.2;
+  transition: font-size 0.35s ease;
 }
+.expanded .dist-label { font-size: 12px; }
 
 .chart-section {
   margin-top: auto;
   padding-top: 10px;
   border-top: 1px solid var(--bg-soft);
+  transition: all 0.35s ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  &.expanded {
+    flex: 1;
+    padding-top: 14px;
+
+    .mini-chart {
+      flex: 1;
+      min-height: 120px;
+    }
+
+    .mini-label {
+      font-size: 10px;
+    }
+  }
 }
 .chart-title {
   font-size: 11px;
@@ -291,6 +397,14 @@ const formatShortDate = (dateStr) => {
   align-items: flex-end;
   height: 48px;
   gap: 3px;
+  transition: height 0.35s ease;
+  overflow-x: auto;
+
+  &::-webkit-scrollbar { height: 4px; }
+  &::-webkit-scrollbar-thumb {
+    background: var(--card-border);
+    border-radius: 2px;
+  }
 }
 .mini-bar-wrap {
   flex: 1;
