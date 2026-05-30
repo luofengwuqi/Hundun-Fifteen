@@ -50,7 +50,7 @@ let chartInstance = null
 let resizeObserver = null
 
 /* ---------- 工具：等待 DOM 元素拥有有效尺寸 ---------- */
-const waitContainerReady = (dom, maxRetries = 10, interval = 50) => {
+const waitContainerReady = (dom, maxRetries = 20, interval = 50) => {
   return new Promise((resolve) => {
     if (dom && dom.clientWidth > 0 && dom.clientHeight > 0) {
       resolve(true)
@@ -170,30 +170,38 @@ const disposeChart = () => {
   }
 }
 
-/** 初始化 / 重新初始化图表 */
+/** 初始化 / 重新初始化图表（通过 initializing 互斥锁防止并发调用） */
+let initializing = false
+
 const initChart = async () => {
-  disposeChart()
-  await nextTick()
-  const dom = chartDomRef.value
-  if (!dom) return
+  if (initializing) return
+  initializing = true
+  try {
+    disposeChart()
+    // 等一帧，让浏览器完成布局后再读取 clientWidth/clientHeight
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+    const dom = chartDomRef.value
+    if (!dom) return
 
-  // 等容器拥有有效尺寸后再初始化 ECharts
-  const ready = await waitContainerReady(dom)
-  if (!ready) {
-    // 如果超时仍无尺寸，先用一个兜底尺寸初始化，ResizeObserver 后续会纠正
-    console.warn('[StepsPuzzle] chart container size is 0, init with fallback')
+    // 等容器拥有有效尺寸后再初始化 ECharts
+    const ready = await waitContainerReady(dom)
+    if (!ready) {
+      console.warn('[StepsPuzzle] chart container size is 0, init with fallback')
+    }
+
+    chartInstance = echarts.init(dom)
+    chartInstance.setOption(buildOption())
+
+    // 使用 ResizeObserver 自动跟随容器尺寸变化
+    if (!resizeObserver) {
+      resizeObserver = new ResizeObserver(() => {
+        if (chartInstance) chartInstance.resize()
+      })
+    }
+    resizeObserver.observe(dom)
+  } finally {
+    initializing = false
   }
-
-  chartInstance = echarts.init(dom)
-  chartInstance.setOption(buildOption())
-
-  // 使用 ResizeObserver 自动跟随容器尺寸变化
-  if (!resizeObserver) {
-    resizeObserver = new ResizeObserver(() => {
-      if (chartInstance) chartInstance.resize()
-    })
-  }
-  resizeObserver.observe(dom)
 }
 
 /** 仅更新图表配置（不重新初始化） */
@@ -207,37 +215,52 @@ const resizeChart = () => {
   if (chartInstance) chartInstance.resize()
 }
 
-// 当数据就绪且 DOM 出现时，初始化图表
-watch(showChart, async (val) => {
-  if (val) {
-    await nextTick()
-    if (!chartInstance && chartDomRef.value) {
-      initChart()
-    } else {
-      updateChart()
-    }
-  } else {
-    disposeChart()
-  }
+// showChart 降为 false → 销毁图表。初始化/更新由 chartEntries watcher 统一处理
+watch(showChart, (val) => {
+  if (!val) disposeChart()
 })
 
-// 数据变化 → 更新图表（图表已存在时）
+/**
+ * chartEntries 变化 → 处理所有图表生命周期：
+ *   - 首次数据到达时初始化
+ *   - 筛选条件切换后 DOM 被 v-if 重建时重新初始化
+ *   - 常规数据变化时仅更新配置
+ *
+ * 使用 flush: 'post' 确保此时 DOM 已更新、chartDomRef 已指向新元素
+ */
 watch(chartEntries, () => {
-  if (chartInstance) updateChart()
-}, { deep: true })
+  const dom = chartDomRef.value
+  if (!dom || !showChart.value) return
+
+  if (!chartInstance) {
+    initChart()
+  } else if (chartInstance.getDom() !== dom) {
+    // DOM 已被 v-if 替换（筛选切换时的 loading→数据过渡）
+    disposeChart()
+    initChart()
+  } else {
+    updateChart()
+  }
+}, { deep: true, flush: 'post' })
 
 // 展开态变化 → 更新配置，并在浏览器完成布局后 resize
 watch(() => props.expanded, async () => {
-  // 先让 DOM 更新
   await nextTick()
-  // 再等一帧让浏览器完成布局重排
+  // 等一帧让浏览器完成布局重排
   await new Promise((resolve) => requestAnimationFrame(resolve))
+
+  const dom = chartDomRef.value
+  if (!dom) return
+
+  // 如果 chartInstance 的 DOM 已被替换，先销毁再重建
+  if (chartInstance && chartInstance.getDom() !== dom) {
+    disposeChart()
+  }
 
   if (chartInstance) {
     updateChart()
     resizeChart()
-  } else if (chartDomRef.value && showChart.value) {
-    // 图表尚未初始化（极少情况），重新初始化
+  } else if (showChart.value) {
     initChart()
   }
 })

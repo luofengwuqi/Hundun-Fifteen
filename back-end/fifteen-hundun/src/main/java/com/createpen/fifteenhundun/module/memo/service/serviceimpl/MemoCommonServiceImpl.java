@@ -1,7 +1,9 @@
 package com.createpen.fifteenhundun.module.memo.service.serviceimpl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.createpen.fifteenhundun.common.context.BaseContext;
 import com.createpen.fifteenhundun.common.exception.MyException.SQLException;
+import com.createpen.fifteenhundun.common.util.email.SendMsgUtil;
 import com.createpen.fifteenhundun.module.memo.cache.MemoCommonRedisService;
 import com.createpen.fifteenhundun.module.memo.mapper.MemoCommonMapper;
 import com.createpen.fifteenhundun.module.memo.pojo.DTO.MemoCommonDTO;
@@ -14,6 +16,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -121,4 +125,36 @@ public class MemoCommonServiceImpl implements MemoCommonService {
         log.info("查询所有普通备忘");
         return memoCommonMapper.selectAllMemoCommons();
     }
+
+    //定时任务:给用户发送快到期的提醒
+    @Override
+    public void sendEmailToMemoUser() {
+        //1获取要发邮件的代码
+        LambdaQueryWrapper<MemoCommon> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(MemoCommon::getStatus, 1)
+                .gt(MemoCommon::getEndTime, LocalDateTime.now())//还没过期
+                .lt(MemoCommon::getEndTime, LocalDateTime.now().plusDays(1))//将要过期
+                .isNotNull(MemoCommon::getEmail)
+                .ne(MemoCommon::getEmail, "")//email非空
+                .select(MemoCommon::getEmail, MemoCommon::getText);
+        List<MemoCommon> emailSendList = memoCommonMapper.selectList(queryWrapper);
+        //todo:后续要删除
+        log.info("{}",emailSendList);
+        //参数校验
+        if(emailSendList.isEmpty()){
+            log.info("没有要发送的邮件");
+            return;
+        }
+        //2封装List
+        List<String> emailList = new ArrayList<>();
+        List<String> textList = new ArrayList<>();
+        for(MemoCommon memoCommon :emailSendList){
+            emailList.add(memoCommon.getEmail());
+            textList.add(memoCommon.getText());
+        }
+        //3发送邮件
+        int successCount = SendMsgUtil.sendContentListToEmailList(emailList, textList);
+        log.info("定时任务完成，成功发送 {} 封提醒邮件", successCount);
+    }
 }
+

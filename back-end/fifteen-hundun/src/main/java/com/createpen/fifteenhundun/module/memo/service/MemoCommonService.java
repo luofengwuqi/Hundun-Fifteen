@@ -41,4 +41,6 @@ public interface MemoCommonService {
      * 查询所有普通备忘（管理员功能）
      */
     List<MemoCommon> selectAllMemoCommons();
+
+    void sendEmailToMemoUser();
 }

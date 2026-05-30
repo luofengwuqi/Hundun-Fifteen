@@ -79,6 +79,82 @@ public class SendMsgUtil {
     }
 
     /**
+     * 批量发送邮件，每个邮箱对应不同的内容
+     * @param emailList 邮箱地址列表
+     * @param contentList 邮件内容列表（与邮箱列表一一对应）
+     * @return 成功发送的数量
+     */
+    public static int sendContentListToEmailList(List<String> emailList, List<String> contentList) {
+        // 参数校验
+        if (emailList == null || contentList == null || emailList.size() != contentList.size()) {
+            log.error("邮箱列表和内容列表不能为空且长度必须一致");
+            return 0;
+        }
+
+        // 1. 配置参数（仅创建一次）
+        Properties props = new Properties();
+        props.setProperty("mail.smtp.host", SMTP_HOST);
+        props.setProperty("mail.smtp.port", "587");
+        props.setProperty("mail.smtp.auth", "true");
+        props.setProperty("mail.smtp.starttls.enable", "true");
+
+        // 2. 创建会话（仅创建一次）
+        Session session = Session.getInstance(props, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(EMAIL_FROM, EMAIL_AUTH_CODE);
+            }
+        });
+
+        Transport transport = null;
+        int successCount = 0;
+
+        try {
+            // 核心优化：仅建立一次连接，循环复用发送
+            transport = session.getTransport();
+            transport.connect();
+            log.info("批量发送个性化邮件连接建立成功，待发送邮箱数量：{}", emailList.size());
+
+            // 循环发送
+            for (int i = 0; i < emailList.size(); i++) {
+                String toEmail = emailList.get(i);
+                String content = contentList.get(i);
+                
+                try {
+                    // 构建邮件：使用对应的个性化内容
+                    Message message = new MimeMessage(session);
+                    message.setFrom(new InternetAddress(EMAIL_FROM));
+                    message.setRecipient(Message.RecipientType.TO, new InternetAddress(toEmail));
+                    message.setSubject("【备忘提醒】"); // 可自行修改标题
+                    message.setText(content); // 使用对应的个性化内容
+
+                    // 复用连接发送
+                    transport.sendMessage(message, message.getAllRecipients());
+                    successCount++;
+                    log.info("批量发送个性化邮件成功！邮箱：{}", toEmail);
+                } catch (Exception e) {
+                    log.error("批量发送个性化邮件失败，邮箱：{}", toEmail, e);
+                }
+            }
+        } catch (Exception e) {
+            log.error("批量发送个性化邮件建立连接失败", e);
+        } finally {
+            // 统一关闭连接
+            if (transport != null && transport.isConnected()) {
+                try {
+                    transport.close();
+                    log.info("批量发送个性化邮件连接已关闭");
+                } catch (MessagingException e) {
+                    log.error("关闭邮件连接失败", e);
+                }
+            }
+        }
+
+        log.info("批量发送个性化邮件完成，总数量：{}，成功数量：{}", emailList.size(), successCount);
+        return successCount;
+    }
+
+    /**
      * 发送单个邮件
      * @param toEmail 收件人邮箱
      * @param content 邮件内容
@@ -134,5 +210,7 @@ public class SendMsgUtil {
             }
         }
     }
+
+
 
 }
