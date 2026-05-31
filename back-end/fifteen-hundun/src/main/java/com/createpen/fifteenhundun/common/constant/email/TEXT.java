@@ -23,4 +23,22 @@ public class TEXT {
         不亲爱的用户sama
         
         很抱歉地通知您 您的反馈由于一些原因被驳回了...""";
+
+    public static final String MEMO_REMINDER_HEAD = """
+            Ciallo～(∠・ω< )⌒★
+        
+            亲爱的用户sama
+            
+            您的规划
+            =========================
+            """;
+    public static final String MEMO_REMINDER_END = """
+            
+            =========================
+            将要结束/到达您设定的提醒日期了
+            
+            请记得处理!
+            
+            祝您今天也有好心情!
+            """;
 }

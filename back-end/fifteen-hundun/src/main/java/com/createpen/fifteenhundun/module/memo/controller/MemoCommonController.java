@@ -20,7 +20,15 @@ public class MemoCommonController {
     public MemoCommonController(MemoCommonService memoCommonService) {
         this.memoCommonService = memoCommonService;
     }
-    
+
+    //手动执行定时任务:发送邮件通知给开启邮件通知功能的用户
+    @PostMapping("/email")
+    public Result<Void> sendEmailToMemoUser() {
+        log.info("手动执行定时任务: 发送邮件通知给开启邮件通知功能的用户");
+        memoCommonService.sendEmailToMemoUser();
+        return Result.success();
+    }
+
     /**
      * 创建普通备忘
      */
@@ -61,10 +69,7 @@ public class MemoCommonController {
         MemoCommon memo = memoCommonService.selectMemoCommonById(id);
         return Result.success(memo);
     }
-    
-    /**
-     * 查询当前用户的所有普通备忘
-     */
+
     /**
      * 查询当前用户的普通备忘列表
      * @param completion 可选：pending-未完成，done-已完成；不传为全部

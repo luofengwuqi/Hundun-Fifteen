@@ -15,8 +15,8 @@ public class MemoEmailSendTask {
     }
 
     //每天执行一次
-    //执行时机:每天早上八点
-    @Scheduled(cron = "0 0 8 * * ?")
+    //执行时机:每小时一次
+    @Scheduled(cron = "0 0 * * * ?")
     public void executeTask() {
         System.out.println("开始执行task任务:发送邮件");
         memoCommonService.sendEmailToMemoUser();

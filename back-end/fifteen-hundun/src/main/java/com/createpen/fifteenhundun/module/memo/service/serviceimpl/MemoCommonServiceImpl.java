@@ -20,6 +20,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.createpen.fifteenhundun.common.constant.email.TEXT.MEMO_REMINDER_END;
+import static com.createpen.fifteenhundun.common.constant.email.TEXT.MEMO_REMINDER_HEAD;
+
 @Service
 @Slf4j
 public class MemoCommonServiceImpl implements MemoCommonService {
@@ -150,7 +153,7 @@ public class MemoCommonServiceImpl implements MemoCommonService {
         List<String> textList = new ArrayList<>();
         for(MemoCommon memoCommon :emailSendList){
             emailList.add(memoCommon.getEmail());
-            textList.add(memoCommon.getText());
+            textList.add(MEMO_REMINDER_HEAD + memoCommon.getText() + MEMO_REMINDER_END);
         }
         //3发送邮件
         int successCount = SendMsgUtil.sendContentListToEmailList(emailList, textList);

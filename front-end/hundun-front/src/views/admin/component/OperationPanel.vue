@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { syncRedisToMysqlAPI } from '@/api/article.js'
+import { sendMemoEmailAPI } from '@/api/memoCommon.js'
 
 // 定义功能分区配置 - 易于扩展
 const operationSections = ref([
@@ -14,16 +15,32 @@ const operationSections = ref([
       { label: '同步文章数据', type: 'success', action: () => handleOperation('同步文章数据') },
     ]
   },
+  {
+    id: 'memo-notification',
+    title: '备忘通知',
+    icon: '📧',
+    description: '备忘邮件通知相关操作',
+    operations: [
+      { label: '发送备忘邮件通知', type: 'warning', action: () => handleOperation('发送备忘邮件通知') },
+    ]
+  },
 
 ])
 
 // 处理操作点击
-const handleOperation = (operationName) => {
+const handleOperation = async (operationName) => {
   ElMessage.success(`执行操作: ${operationName}`)
-  if(operationName === '同步文章数据'){
-    syncRedisToMysqlAPI()
+  try {
+    if (operationName === '同步文章数据') {
+      await syncRedisToMysqlAPI()
+    } else if (operationName === '发送备忘邮件通知') {
+      await sendMemoEmailAPI()
+    }
+    ElMessage.success(`${operationName} 完成`)
+  } catch (error) {
+    console.error(`操作失败: ${operationName}`, error)
+    ElMessage.error(`${operationName} 失败`)
   }
-  console.log(`执行操作: ${operationName}`)
 }
 
 // 清除本地存储
@@ -39,7 +56,7 @@ const handleClearStorage = () => {
     <!-- 页面标题 -->
     <div class="panel-header">
       <h1 class="panel-title">操作面板</h1>
-      <p class="panel-subtitle">集中管理系统各项功能</p>
+      <p class="panel-subtitle">集中管理系统各项SpringTask功能</p>
     </div>
 
     <!-- 功能分区网格 -->

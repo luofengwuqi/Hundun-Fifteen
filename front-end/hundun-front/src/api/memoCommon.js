@@ -44,3 +44,10 @@ export const getMemo = async (id) => {
 export const getUserMemos = async (params) => {
   return await request.get('/memo/common', { params })
 }
+
+/**
+ * 手动执行定时任务：发送邮件通知给开启邮件通知功能的用户
+ */
+export const sendMemoEmailAPI = async () => {
+  return await request.post('/memo/common/email')
+}

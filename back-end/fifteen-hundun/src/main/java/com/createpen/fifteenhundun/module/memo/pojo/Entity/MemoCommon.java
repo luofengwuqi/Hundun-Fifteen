@@ -1,5 +1,6 @@
 package com.createpen.fifteenhundun.module.memo.pojo.Entity;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@TableName("user_memo_common")
 public class MemoCommon implements Serializable {
     private Long id;
     private Long userId;
