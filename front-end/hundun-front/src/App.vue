@@ -7,9 +7,10 @@ const route = useRoute()
 <template>
   <div class="app">
     <!-- 路由过渡动画：使用作用域插槽 -->
+    <!-- 用 $route.fullPath 作为 key，确保 query/params 变化时组件完全重建 -->
     <router-view v-slot="{ Component }">
       <transition name="fade" mode="out-in">
-        <component :is="Component" :key="route.path" />
+        <component :is="Component" :key="$route.fullPath" />
       </transition>
     </router-view>
   </div>

@@ -1,7 +1,7 @@
 <script setup>
 // 首页组件 - 录入与翻找功能入口
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, isNavigationFailure } from 'vue-router'
 import insertImage from '@/assets/img/user/home/insert.png'
 import selectImage from '@/assets/img/user/home/select.png'
 import healthImage from '@/assets/img/user/home/health.png'
@@ -35,10 +35,14 @@ let fadeOutTimer = null // 淡出定时器
 const CHARGE_DURATION = 800 // 充能持续时间(毫秒)
 const FADE_OUT_DURATION = 400 // 淡出动画时长
 
-const handleBoxClick = (boxType) => {
+const handleBoxClick = async (boxType) => {
   if (boxType === 'left') {
     // 左侧盒子：跳转到录入页面
-    router.push('/user/insert')
+    try {
+      await router.push('/user/insert')
+    } catch (e) {
+      console.error('导航到录入页面失败:', e)
+    }
   } else if (boxType === 'right' && !isExpanded.value && !isAnimating.value) {
     isAnimating.value = true
     // 立即触发展开动画，左侧盒子开始飘出
@@ -110,7 +114,7 @@ const categories = computed(() => {
 })
 
 // 处理小盒子点击事件
-const handleCategoryClick = (category) => {
+const handleCategoryClick = async (category) => {
   // 如果刚充能完成松手,阻止这次点击
   if (shouldPreventClick.value) {
     shouldPreventClick.value = false
@@ -119,11 +123,21 @@ const handleCategoryClick = (category) => {
 
   // 只有启用的盒子才能点击跳转
   if (category.enabled && category.path) {
-    // 使用 query 参数传递分类
-    router.push({
-      path: '/user/select',
-      query: { category: category.statusKey }
-    })
+    try {
+      const result = await router.push({
+        path: '/user/select',
+        query: { category: category.statusKey }
+      })
+      // 如果导航到同一位置（NavigationFailure），通过添加时间戳强制刷新
+      if (isNavigationFailure(result)) {
+        await router.replace({
+          path: '/user/select',
+          query: { category: category.statusKey, _t: Date.now() }
+        })
+      }
+    } catch (e) {
+      console.error('导航到翻找页面失败:', e)
+    }
   }
 }
 
@@ -170,7 +184,12 @@ const handleLongPressEnd = () => {
     shouldPreventClick.value = true
 
     // 执行路由跳转
-    router.push(category.path)
+    router.push(category.path).catch(e => {
+      // NavigationFailure 可以忽略（已在同一位置）
+      if (!isNavigationFailure(e)) {
+        console.error('长按充能后的路由跳转失败:', e)
+      }
+    })
     return
   }
 

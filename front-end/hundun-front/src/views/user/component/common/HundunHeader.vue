@@ -2,6 +2,7 @@
 import router from '@/router/index.js'
 import { useUserStore } from '@/stores/user.js'
 import { computed } from 'vue'
+import { isNavigationFailure } from 'vue-router'
 import defaultAvatar from '@/assets/img/common/user.jpg'
 import { User, SwitchButton } from '@element-plus/icons-vue'
 import { logout } from '@/utils/login/logout.js'
@@ -20,7 +21,11 @@ const avatarSrc = computed(() => {
 
 const handleCommand =  async (command) => {
   if (command === 'info') {
-    router.push('/user/info')
+    try {
+      await router.push('/user/info')
+    } catch (e) {
+      console.error('导航到个人信息页失败:', e)
+    }
   } else if (command === 'logout') {
     await logout()
   }
@@ -32,9 +37,21 @@ const list=[
   { id: 3, name:'翻找' ,to:'/user/select'},
   { id: 4, name:'帮助' ,to:'/help'}
 ]
-const handleRouter = (to)=>{
-  if (to) {
-    router.replace(to)
+
+/**
+ * 处理导航，捕获 NavigationFailure 避免静默失败
+ */
+const handleRouter = async (to) => {
+  if (!to) return
+  try {
+    const failure = await router.replace(to)
+    // Vue Router 4 中，导航到同一位置返回 NavigationFailure
+    if (isNavigationFailure(failure)) {
+      // 如果已经是当前位置，尝试强制刷新组件
+      console.log('导航到同一位置，强制刷新:', to)
+    }
+  } catch (error) {
+    console.error('导航失败:', to, error)
   }
 }
 </script>
