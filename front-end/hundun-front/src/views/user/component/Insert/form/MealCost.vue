@@ -1,4 +1,4 @@
-<script setup>
+ <script setup>
 import {  reactive } from 'vue'
 import {  insertFoodMoneyAPI, updateFoodMoneyAPI } from '@/api/food.js'
 import {  ElMessage, ElMessageBox } from 'element-plus'

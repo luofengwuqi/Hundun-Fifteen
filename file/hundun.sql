@@ -302,6 +302,7 @@ CREATE TABLE `user_memo_common` (
   `text` text,
   `status` tinyint(1) NOT NULL DEFAULT '0' COMMENT '0:关闭邮件通知, 1:开启邮件通知',
   `email` varchar(255) DEFAULT NULL,
+  `remind_before_hours` int NOT NULL DEFAULT '12' COMMENT '提醒提前量(小时)，默认12小时',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),

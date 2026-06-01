@@ -4,8 +4,8 @@
 
     <!-- 插入普通备忘 -->
     <insert id="insertMemoCommon" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO user_memo_common (user_id, begin_time, end_time, text, status, email, created_at, updated_at)
-        VALUES (#{userId}, #{beginTime}, #{endTime}, #{text}, #{status}, #{email}, NOW(), NOW())
+        INSERT INTO user_memo_common (user_id, begin_time, end_time, text, status, email, remind_before_hours, created_at, updated_at)
+        VALUES (#{userId}, #{beginTime}, #{endTime}, #{text}, #{status}, #{email}, #{remindBeforeHours}, NOW(), NOW())
     </insert>
 
     <!-- 根据ID删除普通备忘 -->
@@ -22,6 +22,7 @@
             text = #{text},
             status = #{status},
             email = #{email},
+            remind_before_hours = #{remindBeforeHours},
             updated_at = NOW()
         WHERE id = #{id} AND user_id = #{userId}
     </update>

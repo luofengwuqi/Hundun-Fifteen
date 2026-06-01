@@ -14,6 +14,7 @@ export function useCommonMemoActions(todoFilter) {
     text: memo.text,
     status: memo.status,
     email: memo.email ?? undefined,
+    remindBeforeHours: memo.remindBeforeHours ?? 12,
     ...patch
   })
 

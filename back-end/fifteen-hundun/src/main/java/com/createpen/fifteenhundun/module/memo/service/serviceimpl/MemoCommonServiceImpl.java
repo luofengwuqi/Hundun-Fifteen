@@ -1,6 +1,7 @@
 package com.createpen.fifteenhundun.module.memo.service.serviceimpl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.createpen.fifteenhundun.common.context.BaseContext;
 import com.createpen.fifteenhundun.common.exception.MyException.SQLException;
 import com.createpen.fifteenhundun.common.util.email.SendMsgUtil;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.createpen.fifteenhundun.common.constant.email.TEXT.MEMO_REMINDER_END;
 import static com.createpen.fifteenhundun.common.constant.email.TEXT.MEMO_REMINDER_HEAD;
@@ -47,6 +49,10 @@ public class MemoCommonServiceImpl implements MemoCommonService {
         MemoCommon memoCommon = new MemoCommon();
         BeanUtils.copyProperties(dto, memoCommon);
         memoCommon.setUserId(userId);
+        // 设置提醒提前量的默认值
+        if (memoCommon.getRemindBeforeHours() == null) {
+            memoCommon.setRemindBeforeHours(12);
+        }
         if (dto.getStatus() != null && dto.getStatus() == 1) {
             User user = userService.selectUserById(userId);
             memoCommon.setEmail(user.getEmail());
@@ -75,9 +81,14 @@ public class MemoCommonServiceImpl implements MemoCommonService {
         MemoCommon memoCommon = new MemoCommon();
         BeanUtils.copyProperties(dto, memoCommon);
         memoCommon.setUserId(userId);
+        // 设置提醒提前量的默认值
+        if (memoCommon.getRemindBeforeHours() == null) {
+            memoCommon.setRemindBeforeHours(12);
+        }
         try{
             memoCommonMapper.updateMemoCommon(memoCommon);
         }catch (Exception e){
+            log.error("更新普通备忘失败, id: {}, userId: {}", dto.getId(), userId, e);
             throw new SQLException("操作失败,请检查任务是否开启");
         }
         memoCommonRedisService.evictAll(userId, dto.getId());
@@ -136,13 +147,14 @@ public class MemoCommonServiceImpl implements MemoCommonService {
         LambdaQueryWrapper<MemoCommon> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(MemoCommon::getStatus, 1)
                 .gt(MemoCommon::getEndTime, LocalDateTime.now())//还没过期
-                .lt(MemoCommon::getEndTime, LocalDateTime.now().plusDays(1))//将要过期
                 .isNotNull(MemoCommon::getEmail)
                 .ne(MemoCommon::getEmail, "")//email非空
-                .select(MemoCommon::getEmail, MemoCommon::getText);
+                // 使用每行的 remind_before_hours 作为动态提醒窗口:
+                // end_time <= NOW() + INTERVAL remind_before_hours HOUR
+                .apply("end_time <= DATE_ADD(NOW(), INTERVAL remind_before_hours HOUR)")
+                .select(MemoCommon::getId,MemoCommon::getEmail, MemoCommon::getText, MemoCommon::getRemindBeforeHours);
         List<MemoCommon> emailSendList = memoCommonMapper.selectList(queryWrapper);
-        //todo:后续要删除
-        log.info("{}",emailSendList);
+//        log.info("{}",emailSendList);
         //参数校验
         if(emailSendList.isEmpty()){
             log.info("没有要发送的邮件");
@@ -158,6 +170,12 @@ public class MemoCommonServiceImpl implements MemoCommonService {
         //3发送邮件
         int successCount = SendMsgUtil.sendContentListToEmailList(emailList, textList);
         log.info("定时任务完成，成功发送 {} 封提醒邮件", successCount);
+        //4发送完成 修改状态
+        LambdaUpdateWrapper<MemoCommon> memoCommonUpdateWrapper = new LambdaUpdateWrapper<>();
+        memoCommonUpdateWrapper
+                .set(MemoCommon::getStatus, 2)
+                .in(MemoCommon::getId, emailSendList.stream().map(MemoCommon::getId).collect(Collectors.toList()));
+        memoCommonMapper.update(null, memoCommonUpdateWrapper);
     }
 }
 

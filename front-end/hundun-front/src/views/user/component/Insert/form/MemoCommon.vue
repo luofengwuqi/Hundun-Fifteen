@@ -14,14 +14,16 @@ const memoForm = reactive({
   beginTime: '',
   endTime: '',
   text: '',
-  status: 0 // 默认开启邮件通知
+  status: 0, // 0:关闭邮件通知, 1:开启邮件通知
+  remindBeforeHours: 12 // 提醒提前量(小时)，默认12
 })
 
 // 错误信息
 const errors = reactive({
   beginTime: '',
   endTime: '',
-  text: ''
+  text: '',
+  remindBeforeHours: ''
 })
 
 // 验证单个字段
@@ -48,6 +50,23 @@ const validateField = (field, value) => {
     return true
   }
 
+  if (field === 'remindBeforeHours') {
+    // 仅在开启邮件通知时校验
+    if (memoForm.status === 1) {
+      if (value === '' || value === null || value === undefined) {
+        errors[field] = '提醒时间不能为空'
+        return false
+      }
+      const num = Number(value)
+      if (!Number.isInteger(num) || num < 0) {
+        errors[field] = '请输入非负整数'
+        return false
+      }
+    }
+    errors[field] = ''
+    return true
+  }
+
   errors[field] = ''
   return true
 }
@@ -67,6 +86,13 @@ const validateAll = () => {
       }
     }
   })
+
+  // 开启邮件通知时，额外校验 remindBeforeHours
+  if (memoForm.status === 1) {
+    if (!validateField('remindBeforeHours', memoForm.remindBeforeHours)) {
+      isValid = false
+    }
+  }
 
   // 验证结束时间不能早于开始时间
   if (memoForm.beginTime && memoForm.endTime) {
@@ -96,7 +122,8 @@ const handleOK = async () => {
     beginTime: memoForm.beginTime,
     endTime: memoForm.endTime,
     text: memoForm.text.trim(),
-    status: memoForm.status
+    status: memoForm.status,
+    remindBeforeHours: Number(memoForm.remindBeforeHours)
   }
 
   console.log('保存备忘录:', dataToSend)
@@ -202,6 +229,32 @@ const statusText = computed(() => {
               <span class="toggle-text">{{ statusText }}</span>
             </div>
           </div>
+        </div>
+
+        <!-- 提醒提前量（仅开启邮件通知时显示） -->
+        <div v-if="memoForm.status === 1" class="form-item full-width">
+          <div class="remind-row">
+            <label class="form-label">
+              <span class="form-icon">⏳</span>
+              <span class="form-name">何时提醒</span>
+            </label>
+            <div class="remind-input-wrapper">
+              <span class="remind-prefix">结束前</span>
+              <el-input-number
+                v-model="memoForm.remindBeforeHours"
+                @change="handleInput('remindBeforeHours')"
+                :min="0"
+                :max="720"
+                :step="1"
+                :precision="0"
+                controls-position=""
+                class="remind-input"
+                :class="{ 'has-error': errors.remindBeforeHours }"
+              />
+              <span class="remind-unit">小时</span>
+            </div>
+          </div>
+          <span v-if="errors.remindBeforeHours" class="error-message">{{ errors.remindBeforeHours }}</span>
         </div>
       </div>
     </div>
@@ -354,6 +407,88 @@ const statusText = computed(() => {
 }
 
 
+
+// 提醒提前量行（标签和输入框同一行）
+.remind-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #FFF8E8;
+  border-radius: 8px;
+  border: 2px solid #FFEFD5;
+  gap: 12px;
+  overflow: hidden;
+
+  .form-label {
+    flex-shrink: 1;
+    min-width: 0;
+    margin: 0;
+    white-space: normal;
+    line-height: 1.4;
+  }
+}
+
+.remind-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 1;
+  min-width: 0;
+
+  .remind-input {
+    width: 72px;
+  }
+
+  // 左右分布按钮时，数字居中、按钮更紧凑
+  :deep(.remind-input) {
+    .el-input-number__decrease,
+    .el-input-number__increase {
+      width: 20px;
+      font-size: 12px;
+      background: #FFF8E8;
+      border-color: #FFEFD5;
+      color: #5A4A42;
+
+      &:hover {
+        background: #FFEFD5;
+        color: #C3272B;
+      }
+    }
+
+    .el-input__wrapper {
+      box-shadow: none;
+      border: 2px solid #FFEFD5;
+      border-radius: 8px;
+      padding: 0 20px;
+
+      input {
+        text-align: center;
+        font-size: 12px;
+        color: #333;
+        height: 24px;
+      }
+    }
+
+    &.has-error .el-input__wrapper {
+      border-color: #E74C3C;
+    }
+  }
+
+  .remind-prefix {
+    font-size: 12px;
+    color: #999;
+    font-weight: 400;
+    white-space: nowrap;
+  }
+
+  .remind-unit {
+    font-size: 12px;
+    color: #999;
+    font-weight: 400;
+    white-space: nowrap;
+  }
+}
 
 // 开关样式
 .toggle-wrapper {
