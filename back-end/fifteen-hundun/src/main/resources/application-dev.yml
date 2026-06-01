@@ -22,6 +22,10 @@ fifteen-hundun:
   devtools:
     restart:
       enabled: false
+  glm:
+    api-key: bc8757501b00461bb0e21d968aea2d21.IsBthCEqHGYYT1fT
+    api-url: https://open.bigmodel.cn/api/paas/v4/chat/completions
+    model: GLM-4.7-Flash
 
 # 服务器配置
 server:

@@ -43,6 +43,12 @@ aliyun:
   bucket-name: ${fifteen-hundun.alioss.bucket-name}
   domain: ${fifteen-hundun.alioss.domain}
 
+# GLM AI配置
+glm:
+  api-key: ${fifteen-hundun.glm.api-key}
+  api-url: ${fifteen-hundun.glm.api-url}
+  model: ${fifteen-hundun.glm.model:glm-4}
+
 
 #mybatis配置
 mybatis:
