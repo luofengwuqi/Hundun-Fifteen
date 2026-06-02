@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { useUserStore } from '@/stores/user'
+import DiaryInput from './form/DiaryInput.vue'
 import WhatAteToday from './form/WhatAteToday.vue'
 import MealCost from './form/MealCost.vue'
 import FeatureDisabled from './form/FeatureDisabled.vue'
@@ -25,10 +26,14 @@ const props = defineProps({
   selectedActions: {
     type: Array,
     default: () => []
+  },
+  diaryMode: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['hide-component'])
+const emit = defineEmits(['hide-component', 'update:diaryMode'])
 
 const isModulesEnabled = computed(() => {
   const status = userStore.userModelStatus
@@ -218,11 +223,18 @@ const onPanelAfterLeave = (el) => {
 
 <template>
   <div class="right-side-container">
-    <div class="workspace-title">
+    <div class="workspace-title" v-if="!diaryMode">
       <h2>工作台</h2>
     </div>
 
-    <Transition name="empty-fade" mode="out-in">
+    <!-- 日记 AI 模式 -->
+    <DiaryInput
+      v-if="diaryMode"
+      class="diary-input-full"
+      @back="$emit('update:diaryMode', false)"
+    />
+
+    <Transition v-else name="empty-fade" mode="out-in">
       <div v-if="componentsToShow.length === 0" key="empty" class="empty-state">
         <p class="empty-text">
           {{
@@ -272,9 +284,15 @@ const onPanelAfterLeave = (el) => {
   flex-direction: column;
 }
 
+.diary-input-full {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
 .workspace-title {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 20px;
   flex-shrink: 0;
 
   h2 {

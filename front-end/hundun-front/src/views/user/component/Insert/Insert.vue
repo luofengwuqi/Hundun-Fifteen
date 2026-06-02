@@ -5,6 +5,8 @@ import InsertRightSide from '@/views/user/component/Insert/InsertRightSide.vue'
 
 // 当前选中的操作列表
 const selectedActions = ref([])
+// 日记 AI 模式
+const diaryMode = ref(false)
 // 跟踪已隐藏的组件
 const hiddenComponents = ref(new Set())
 
@@ -79,13 +81,17 @@ const handleHideComponent = (componentName) => {
       <div class="left-panel">
         <InsertLeftSide 
           :selected-actions="selectedActions" 
-          @action-select="handleActionSelect" 
+          :diary-mode="diaryMode"
+          @action-select="handleActionSelect"
+          @update:diary-mode="diaryMode = $event"
         />
       </div>
       <div class="right-panel">
         <InsertRightSide 
           :selected-actions="selectedActions" 
+          :diary-mode="diaryMode"
           @hide-component="handleHideComponent"
+          @update:diary-mode="diaryMode = $event"
         />
       </div>
     </div>

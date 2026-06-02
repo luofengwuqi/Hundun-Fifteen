@@ -9,11 +9,19 @@ const props = defineProps({
   selectedActions: {
     type: Array,
     default: () => []
+  },
+  diaryMode: {
+    type: Boolean,
+    default: false
   }
 })
 
 // 定义事件
-const emit = defineEmits(['action-select'])
+const emit = defineEmits(['action-select', 'update:diaryMode'])
+
+const handleDiaryModeChange = (val) => {
+  emit('update:diaryMode', val)
+}
 
 // 根据当前时间获取问候语
 const greeting = computed(() => {
@@ -78,7 +86,7 @@ const handleQuickAction = (action) => {
     </div>
 
     <!-- 快捷操作按钮 -->
-    <div class="quick-actions">
+    <div v-if="!props.diaryMode" class="quick-actions">
       <button
         v-for="action in quickActions"
         :key="action.label"
@@ -90,6 +98,38 @@ const handleQuickAction = (action) => {
         <span class="action-label">{{ action.label }}</span>
       </button>
     </div>
+
+    <!-- 日记 AI 模式提示 -->
+    <div v-else class="diary-tips">
+      <p class="tip-title">AI 日记 SOLO</p>
+      <p class="tip-desc">告别表单 · 写个日记 · 自动录入</p>
+      <div class="tip-list-label">目前支持识别的：</div>
+      <ul class="tip-list">
+        <li>🍜 饮食记录</li>
+        <li>💰 餐饮花费</li>
+        <li>😴 睡眠记录</li>
+        <li>💭 心情记录</li>
+        <li>📍 外出活动</li>
+        <li>🚇 交通花费</li>
+        <li>🛒 消费记录</li>
+        <li>📝 待办事项</li>
+      </ul>
+      <div class="tip-example">
+        <p class="example-label">试试这样写：</p>
+        <p class="example-text">"今天早上吃了两个包子和一碗粥，花了12块钱。下午去公园跑了3公里，心情不错。晚上要记得买牙膏。"</p>
+      </div>
+      <div class="tip-hint">
+        <span class="hint-icon">💡</span>
+        <span class="hint-text">尝试加明确的时间，这样识别更准确</span>
+      </div>
+    </div>
+
+    <!-- 传统表单模式切换 -->
+    <div class="mode-toggle" @click="handleDiaryModeChange(!props.diaryMode)">
+      <div class="toggle-slider" :class="{ 'slide-right': props.diaryMode }" />
+      <span class="toggle-label" :class="{ active: !props.diaryMode }">传统表单模式</span>
+      <span class="toggle-label" :class="{ active: props.diaryMode }">日记 AI 模式</span>
+    </div>
   </div>
 </template>
 
@@ -97,13 +137,14 @@ const handleQuickAction = (action) => {
 .left-side-container {
   width: 100%;
   height: 100%;
-  padding: 32px 24px;
+  padding: 32px 0 0;
   display: flex;
   flex-direction: column;
   gap: 32px;
 }
 
 .greeting-section {
+  padding: 0 24px;
   animation: fadeInUp 0.6s ease-out;
 }
 
@@ -142,6 +183,7 @@ const handleQuickAction = (action) => {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
+  padding: 0 24px;
   animation: fadeInUp 0.6s ease-out 0.2s both;
 }
 
@@ -216,6 +258,154 @@ const handleQuickAction = (action) => {
   color: #454545;
   font-weight: 500;
   white-space: nowrap;
+}
+
+.diary-tips {
+  padding: 0 24px;
+  animation: fadeInUp 0.4s ease-out;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.tip-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: #C3272B;
+  text-align: center;
+  letter-spacing: 2px;
+}
+
+.tip-desc {
+  margin: -4px 0 0;
+  font-size: 13px;
+  color: #AAA;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.tip-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  background: rgba(195, 39, 43, 0.06);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.hint-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.hint-text {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #888;
+}
+
+.tip-list-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #5A4A42;
+  margin-top: 4px;
+}
+
+.tip-example {
+  background: rgba(195, 39, 43, 0.06);
+  border-radius: 8px;
+  padding: 10px 12px;
+  flex-shrink: 0;
+}
+
+.example-label {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #C3272B;
+}
+
+.example-text {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #888;
+  font-style: italic;
+}
+
+.tip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+
+  li {
+    font-size: 13px;
+    color: #555;
+    padding: 6px 10px;
+    background: rgba(255, 248, 232, 0.6);
+    border-radius: 6px;
+    line-height: 1.4;
+  }
+}
+
+.mode-toggle {
+  margin-top: auto;
+  width: 100%;
+  padding: 0;
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  position: relative;
+  flex-shrink: 0;
+  height: 48px;
+  overflow: hidden;
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: calc(50% - 12px);
+  height: calc(100% - 12px);
+  background: #C3272B;
+  border-radius: 6px;
+  transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease;
+
+  &.slide-right {
+    left: calc(50% + 6px);
+  }
+}
+
+.mode-toggle:hover .toggle-slider {
+  background: #D64A4F;
+}
+
+.toggle-label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #5A4A42;
+  z-index: 1;
+  transition: color 0.25s ease;
+  user-select: none;
+
+  &.active {
+    color: #FFF;
+  }
 }
 
 @keyframes fadeInUp {
