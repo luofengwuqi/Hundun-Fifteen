@@ -173,7 +173,7 @@ public class MemoCommonServiceImpl implements MemoCommonService {
         //4发送完成 修改状态
         LambdaUpdateWrapper<MemoCommon> memoCommonUpdateWrapper = new LambdaUpdateWrapper<>();
         memoCommonUpdateWrapper
-                .set(MemoCommon::getStatus, 2)
+                .set(MemoCommon::getStatus, 0)//未开启通知的状态
                 .in(MemoCommon::getId, emailSendList.stream().map(MemoCommon::getId).collect(Collectors.toList()));
         memoCommonMapper.update(null, memoCommonUpdateWrapper);
     }
