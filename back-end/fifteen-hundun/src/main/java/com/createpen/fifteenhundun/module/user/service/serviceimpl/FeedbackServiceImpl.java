@@ -125,15 +125,25 @@ public class FeedbackServiceImpl implements FeedbackService {
         feedback.setText(dto.getText());
         feedback.setCreatedAt(LocalDateTime.now());
         Long currentId = BaseContext.getCurrentId();
-        User user= userRedisService.getUserInRedis(currentId);
-        if(user == null){
-            user = userMapper.selectUserById(currentId);
-            userRedisService.saveUserInRedis(user);
+        log.info("当前用户ID：{}", currentId);
+        boolean unLogin = currentId == null || currentId <= 0;
+        if(!unLogin){
+            //登录了 那么获取用户信息:
+            User user= userRedisService.getUserInRedis(currentId);
+            if(user == null){
+                user = userMapper.selectUserById(currentId);
+                userRedisService.saveUserInRedis(user);
+            }
+            feedback.setUserId(Math.toIntExact(user.getId()));
+            feedback.setUsername(user.getUsername());
+            feedback.setUserEmail(user.getEmail());
+        }else{
+            feedback.setUserId(0);
+            feedback.setUsername("未登录用户");
         }
-        feedback.setUserId(Math.toIntExact(user.getId()));
-        feedback.setUsername(user.getUsername());
-        feedback.setUserEmail(user.getEmail());
         feedback.setStatus(FEEDBACK_STATUS_UNDO);
+
+
         //2 insert
         feedbackMapper.insertFeedback(feedback);
         //3 移除feedbacks大缓存

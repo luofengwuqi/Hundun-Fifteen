@@ -30,13 +30,15 @@ public class LoginFilter implements Filter {
     private static final List<String> SKIP_URIS = Arrays.asList(
             "/user/login",                        // /user/login 下的所有接口
             "/user/register",                              // 注册接口
-            "/admin"
+            "/admin",
+            "/feedback"                                   // 反馈接口（用于忘记密码等未登录场景）
     );
     //对应 SKIP_URIS 中需要限制方法的路径（索引对应
     private static final List<String> SKIP_URIS_METHODS = Arrays.asList(
             "",                   // /user/login/*：允许所有方法
             "POST",               // 注册接口：仅允许 POST
-            "POST"                // 管理员接口：仅允许 POST
+            "POST",               // 管理员接口：仅允许 POST
+            "POST"                // 反馈接口：仅允许 POST
     );
 
     public LoginFilter(RedisTemplate<String, Object> redisTemplate) {

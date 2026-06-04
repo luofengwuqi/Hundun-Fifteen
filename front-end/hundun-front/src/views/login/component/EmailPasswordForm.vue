@@ -6,6 +6,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { loginRouterPush } from '@/utils/login/loginRouterPush.js'
 import { View, Hide } from '@element-plus/icons-vue'
+import ForgotPasswordDialog from './ForgotPasswordDialog.vue'
 
 // 定义 emits
 const emit = defineEmits(['changeLoginType'])
@@ -55,8 +56,10 @@ const handleRegister = async () => {
   // 通知父组件切换到注册模式
   emit('changeLoginType', 'register')
 }
-
-
+const forgotDialogRef = ref(null)
+const handleForgotPassword = () => {
+  forgotDialogRef.value?.open()
+}
 
 </script>
 <template>
@@ -95,8 +98,9 @@ const handleRegister = async () => {
           <el-button type="primary" @click="handleRegister">注册</el-button>
         </el-form-item>
       </div>
-      <router-link to="/help">忘记密码</router-link>
+      <span class="forgot-password" @click="handleForgotPassword">忘记密码</span>
     </el-form>
+    <ForgotPasswordDialog ref="forgotDialogRef" />
 
   </div>
 </template>
@@ -119,13 +123,14 @@ const handleRegister = async () => {
     }
 
   }
-  a{
+  .forgot-password{
     display: block;
     width: 20%;
     margin-left: 80%;
     color: #AAA;
+    cursor: pointer;
   }
-  a:hover{
+  .forgot-password:hover{
     color: #666;
   }
   /* 专门放大表单标签字体 */
