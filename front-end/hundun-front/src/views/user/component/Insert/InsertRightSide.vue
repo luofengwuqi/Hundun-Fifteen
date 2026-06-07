@@ -329,21 +329,21 @@ const onPanelAfterLeave = (el) => {
   opacity: 0;
 }
 
-// 横向排列 + 自动换行：从左到右排满后折到下一行（可纵向滚动），避免 columns 把第 4 张挤到屏外
+// 瀑布流 / Masonry 布局：纵向填满一列后自动折到下一列
 .component-list {
   flex: 1;
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  align-content: flex-start;
-  align-items: flex-start;
+  columns: 3;
+  column-gap: 20px;
+  column-fill: auto;
   position: relative;
   min-height: 0;
   width: 100%;
   box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -364,10 +364,8 @@ const onPanelAfterLeave = (el) => {
 }
 
 .component-item {
-  flex: 1 1 260px;
-  max-width: calc(33.333% - 14px);
-  min-width: 250px;
-  min-height: 0;
+  break-inside: avoid;
+  margin-bottom: 20px;
   box-sizing: border-box;
 
   > * {
@@ -377,14 +375,14 @@ const onPanelAfterLeave = (el) => {
 }
 
 @media (max-width: 900px) {
-  .component-item {
-    max-width: calc(50% - 10px);
+  .component-list {
+    columns: 2;
   }
 }
 
 @media (max-width: 600px) {
-  .component-item {
-    max-width: 100%;
+  .component-list {
+    columns: 1;
   }
 }
 
