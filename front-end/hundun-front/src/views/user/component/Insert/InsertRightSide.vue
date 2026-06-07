@@ -282,6 +282,7 @@ const onPanelAfterLeave = (el) => {
   padding: 24px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .diary-input-full {
@@ -365,6 +366,7 @@ const onPanelAfterLeave = (el) => {
 
 .component-item {
   break-inside: avoid;
+  overflow: hidden;
   margin-bottom: 20px;
   box-sizing: border-box;
 
