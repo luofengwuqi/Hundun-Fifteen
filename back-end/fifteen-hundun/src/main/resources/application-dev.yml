@@ -17,7 +17,7 @@ fifteen-hundun:
     port: 6379
     password:
     database: 0
-    timeout: 10
+    timeout: 10000
   # DevTools配置 - 禁用自动重启
   devtools:
     restart:
