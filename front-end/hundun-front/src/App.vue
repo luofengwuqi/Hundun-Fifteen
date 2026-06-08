@@ -1,11 +1,13 @@
 <script setup>
 import { RouterView, useRoute } from 'vue-router'
+import MusicMain from '@/views/music/MusicMain.vue'
 
 const route = useRoute()
 </script>
 
 <template>
   <div class="app">
+    <MusicMain></MusicMain>
     <!-- 路由过渡动画：使用作用域插槽 -->
     <!-- 用 $route.fullPath 作为 key，确保 query/params 变化时组件完全重建 -->
     <router-view v-slot="{ Component }">
