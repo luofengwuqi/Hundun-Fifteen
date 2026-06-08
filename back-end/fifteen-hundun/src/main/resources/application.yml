@@ -3,6 +3,10 @@ spring:
     active: dev
   application:
     name: fifteen-hundun
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
   datasource:
     url: ${fifteen-hundun.mysql.url}
     username: ${fifteen-hundun.mysql.username}
