@@ -28,5 +28,7 @@ public class UpdateUserModelStatusDTO {
      */
     private Integer memo;
 
+    private Integer music;
+
     private Long userId;
 }

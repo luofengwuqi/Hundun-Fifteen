@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import Aside from '@/views/admin/Aside.vue'
 import User from '@/views/admin/component/User.vue'
 import InviteAdmin from '@/views/admin/component/InviteAdmin.vue'
@@ -7,6 +7,13 @@ import HandleFeedback from '@/views/admin/component/HandleFeedback.vue'
 import WriteHelp from '@/views/admin/component/WriteHelp.vue'
 import OperationPanel from '@/views/admin/component/OperationPanel.vue'
 import ComingSoon from '@/views/admin/component/ComingSoon.vue'
+import { useUserStore } from '@/stores/user.js'
+
+const userStore = useUserStore()
+//组件刚创建时
+onMounted(() => {
+  userStore.initUserModelStatus()
+})
 
 const header = ref('用户管理');
 const menu = ref(0);

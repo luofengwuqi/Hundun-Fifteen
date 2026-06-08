@@ -40,6 +40,8 @@ public class UserModelStatus implements Serializable {
      */
     private Integer memo;
 
+    private Integer music;
+
     /**
      * 是否新用户 0否 1是
      */
