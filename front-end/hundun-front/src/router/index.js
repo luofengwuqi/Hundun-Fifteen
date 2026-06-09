@@ -9,6 +9,7 @@ const router = createRouter({
     { path:'/login', component:()=>import('@/views/login/Login.vue')},
     { path:'/help', component:()=>import('@/views/help/Help.vue')},
     { path:'/admin',component:()=>import('@/views/admin/AdminLayout.vue')},
+    { path:'/music', component:()=>import('@/views/music/MusicSpace.vue')},
     {
       path:'/user',
       component:()=>import('@/views/user/UserHome.vue'),

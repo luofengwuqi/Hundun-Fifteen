@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.createpen.fifteenhundun.module.music.mapper.MusicMapper">
+
+    <insert id="insertMusic" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO music (title, duration, audio_url, cover_url, uploader_name, create_time, update_time)
+        VALUES (#{title}, #{duration}, #{audioUrl}, #{coverUrl}, #{uploaderName}, NOW(), NOW())
+    </insert>
+
+    <delete id="deleteMusicById">
+        DELETE FROM music WHERE id = #{id}
+    </delete>
+
+    <update id="updateMusic">
+        UPDATE music
+        SET title = #{title}, duration = #{duration},
+            audio_url = #{audioUrl}, cover_url = #{coverUrl}, update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectMusicById" resultType="com.createpen.fifteenhundun.module.music.pojo.entity.Music">
+        SELECT * FROM music WHERE id = #{id}
+    </select>
+
+    <select id="selectAllMusic" resultType="com.createpen.fifteenhundun.module.music.pojo.entity.Music">
+        SELECT * FROM music ORDER BY create_time DESC
+    </select>
+
+</mapper>

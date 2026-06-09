@@ -28,7 +28,7 @@ const route = useRoute()
   overflow: hidden;
 }
 
-/* 路由平滑过渡动画（淡入+轻微右滑，高级感拉满） */
+/* 路由平滑过渡动画 */
 :deep(.fade-enter-from) {
   opacity: 0;
   transform: translateX(10px);
@@ -36,10 +36,17 @@ const route = useRoute()
 :deep(.fade-enter-active) {
   transition: all 0.6s ease-out;
 }
-:deep(.fade-leave-to) {
-  opacity: 0;
+:deep(.fade-enter-to) {
+  opacity: 1;
+  transform: translateX(0);
+}
+:deep(.fade-leave-from) {
+  opacity: 1;
 }
 :deep(.fade-leave-active) {
   transition: all 0.5s ease-in;
+}
+:deep(.fade-leave-to) {
+  opacity: 0;
 }
 </style>
