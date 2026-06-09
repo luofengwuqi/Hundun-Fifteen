@@ -175,14 +175,15 @@ public class MusicRoomCache {
     /**
      * 获取播放列表
      */
-    @SuppressWarnings("unchecked")
     public List<Long> getPlaylist(Long userId) {
         String key = buildMusicRoomListKey(userId);
-        Object value = redisTemplate.opsForList().range(key, 0, -1);
-        if (value == null) {
+        List<Object> rawList = redisTemplate.opsForList().range(key, 0, -1);
+        if (rawList == null || rawList.isEmpty()) {
             return List.of();
         }
-        return (List<Long>) value;
+        return rawList.stream()
+                .map(v -> v instanceof Long ? (Long) v : Long.parseLong(v.toString()))
+                .toList();
     }
 
     /**

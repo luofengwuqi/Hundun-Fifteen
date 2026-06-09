@@ -3,12 +3,15 @@ import { useUserStore } from '@/stores/user.js'
 import { useMusicStore } from '@/stores/music.js'
 import { storeToRefs } from 'pinia'
 import { onMounted, ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import defaultCover from '@/assets/img/music/defaultCover.png'
 
 const userStore = useUserStore()
 const musicStore = useMusicStore()
 const router = useRouter()
+const route = useRoute()
+
+const inRoom = computed(() => route.path.startsWith('/music/room'))
 
 const {
   musicList, currentMusic, currentIndex,
@@ -59,7 +62,7 @@ const handleSeek = (e) => {
 
 const goToMusicSpace = () => {
   expanded.value = false
-  router.push('/music')
+  router.push('/music/main')
 }
 
 onMounted(async () => {
@@ -75,7 +78,7 @@ onMounted(async () => {
 <template>
   <div
     class="music"
-    v-if="userStore.userModelStatus.music === 1"
+    v-if="userStore.userModelStatus.music === 1 && !inRoom"
   >
     <div class="toggle-btn" @click="handleToggleExpand">
       <img

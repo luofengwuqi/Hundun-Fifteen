@@ -23,6 +23,11 @@ export const useMusicStore = defineStore('music', () => {
   const volume = ref(0.7)
 
   let audioElement = null
+  const endedCallbacks = []
+
+  const onEnded = (cb) => {
+    endedCallbacks.push(cb)
+  }
 
   const initAudio = () => {
     if (audioElement) return
@@ -36,6 +41,7 @@ export const useMusicStore = defineStore('music', () => {
     })
     audioElement.addEventListener('ended', () => {
       isPlaying.value = false
+      endedCallbacks.forEach(cb => cb())
       handleSongEnd()
     })
     audioElement.addEventListener('play', () => {
@@ -128,6 +134,16 @@ export const useMusicStore = defineStore('music', () => {
     if (audioElement) audioElement.volume = val
   }
 
+  const stop = () => {
+    if (audioElement) {
+      audioElement.pause()
+    }
+    isPlaying.value = false
+    currentTime.value = 0
+    currentIndex.value = -1
+    currentMusic.value = null
+  }
+
   const fetchAllMusic = async () => {
     loading.value = true
     try {
@@ -215,5 +231,7 @@ export const useMusicStore = defineStore('music', () => {
     seekTo,
     togglePlayMode,
     setVolume,
+    onEnded,
+    stop,
   }
 })

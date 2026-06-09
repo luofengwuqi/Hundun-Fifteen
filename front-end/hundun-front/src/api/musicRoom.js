@@ -23,3 +23,7 @@ export const addSongToRoomAPI = async (dto) => {
 export const deleteSongFromRoomAPI = async (dto) => {
   return await request.delete('/musicRoom/song', { data: dto })
 }
+
+export const switchSongAPI = async (dto) => {
+  return await request.post('/musicRoom/song/switch', dto)
+}

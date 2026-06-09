@@ -1,13 +1,19 @@
 <script setup>
 import { useMusicStore } from '@/stores/music.js'
+import { useMusicRoomStore } from '@/stores/musicRoom.js'
+import { useUserStore } from '@/stores/user.js'
 import { storeToRefs } from 'pinia'
-import { onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import defaultCover from '@/assets/img/music/defaultCover.png'
 import HundunHeader from '@/views/user/component/common/HundunHeader.vue'
 import { loginRouterPush } from '@/utils/login/loginRouterPush.js'
+import { ElMessage } from 'element-plus'
 
 const musicStore = useMusicStore()
+const musicRoomStore = useMusicRoomStore()
+const userStore = useUserStore()
+const route = useRoute()
 const router = useRouter()
 
 const {
@@ -19,6 +25,16 @@ const {
   prevSong, nextSong, togglePlayMode
 } = musicStore
 
+const { room, loading: roomLoading } = storeToRefs(musicRoomStore)
+const { fetchRoomData, createRoom, joinRoom, exitRoom } = musicRoomStore
+
+const drawerOpen = ref(false)
+const joinFormVisible = ref(false)
+const joinPassword = ref('')
+const creating = ref(false)
+
+const ownerId = route.params.ownerId
+
 const coverSrc = (item) => item?.coverUrl || defaultCover
 
 const formatTime = (t) => {
@@ -28,8 +44,87 @@ const formatTime = (t) => {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
-onMounted(() => {
+const toggleDrawer = () => {
+  drawerOpen.value = !drawerOpen.value
+}
+
+const handleCreateRoom = async () => {
+  if (room.value) {
+    drawerOpen.value = false
+    router.push(`/music/room/${room.value.userId}`)
+    return
+  }
+  creating.value = true
+  try {
+    const secret = Math.random().toString(36).slice(2, 10)
+    const res = await createRoom(secret)
+    if (res.code === 200 || res.code === 0) {
+      ElMessage.success('房间创建成功')
+      drawerOpen.value = false
+      router.push(`/music/room/${userStore.userInfo.id}`)
+    }
+  } catch {
+    try {
+      await fetchRoomData()
+      if (room.value) {
+        drawerOpen.value = false
+        router.push(`/music/room/${room.value.userId}`)
+        return
+      }
+    } catch {
+      ElMessage.error('操作失败，请稍后重试')
+    }
+  } finally {
+    creating.value = false
+  }
+}
+
+const handleJoinRoom = async () => {
+  if (!joinPassword.value.trim()) {
+    ElMessage.warning('请输入房间密码')
+    return
+  }
+  try {
+    const res = await joinRoom(joinPassword.value.trim())
+    if (res.code === 200 || res.code === 0) {
+      ElMessage.success('已加入房间')
+      joinPassword.value = ''
+      joinFormVisible.value = false
+      drawerOpen.value = false
+      if (room.value) {
+        router.push(`/music/room/${room.value.userId}`)
+      }
+    }
+  } finally {
+    // noop
+  }
+}
+
+const handleExitRoom = async () => {
+  await exitRoom()
+  ElMessage.success('已退出房间')
+  router.push('/music/main')
+}
+
+onMounted(async () => {
   if (!musicList.value.length) fetchAllMusic()
+  if (ownerId) {
+    try {
+      await fetchRoomData()
+    } catch {
+      // not in room yet
+    }
+  }
+})
+
+watch(() => route.params.ownerId, async (id) => {
+  if (id) {
+    try {
+      await fetchRoomData()
+    } catch {
+      // noop
+    }
+  }
 })
 </script>
 
@@ -81,6 +176,78 @@ onMounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- drawer toggle button -->
+    <button class="drawer-toggle" :class="{ open: drawerOpen }" @click="toggleDrawer">
+      <span class="toggle-icon">{{ drawerOpen ? '✕' : '☰' }}</span>
+    </button>
+
+    <!-- drawer overlay -->
+    <Transition name="drawer-fade">
+      <div v-if="drawerOpen" class="drawer-overlay" @click="drawerOpen = false"></div>
+    </Transition>
+
+    <!-- drawer panel -->
+    <Transition name="drawer-slide">
+      <div v-if="drawerOpen" class="drawer-panel">
+        <div class="drawer-header">
+          <h2 class="drawer-title">抽屉</h2>
+        </div>
+
+        <div class="drawer-body">
+          <!-- music room section -->
+          <div class="room-section">
+            <div class="room-section-header">
+              <span class="room-icon">🎶</span>
+              <span class="room-label">音乐房间</span>
+            </div>
+
+            <!-- not in room -->
+            <template v-if="!room">
+              <button class="room-btn" @click="handleCreateRoom" :disabled="creating || roomLoading">
+                {{ creating ? '创建中...' : '创建音乐房间' }}
+              </button>
+
+              <button class="room-btn" @click="joinFormVisible = !joinFormVisible">
+                加入音乐房间
+              </button>
+
+              <Transition name="form-expand">
+                <div v-if="joinFormVisible" class="room-form">
+                  <input
+                    v-model="joinPassword"
+                    type="password"
+                    class="room-input"
+                    placeholder="输入房间密码"
+                    @keyup.enter="handleJoinRoom"
+                  />
+                  <button class="room-btn primary small" @click="handleJoinRoom" :disabled="roomLoading">
+                    确认加入
+                  </button>
+                </div>
+              </Transition>
+            </template>
+
+            <!-- in room -->
+            <template v-else>
+              <div class="room-info">
+                <div class="room-info-row">
+                  <span class="room-info-label">房主ID</span>
+                  <span class="room-info-value">{{ room.userId }}</span>
+                </div>
+                <div class="room-info-row">
+                  <span class="room-info-label">歌单</span>
+                  <span class="room-info-value">{{ room.musicIdList?.length || 0 }} 首</span>
+                </div>
+              </div>
+              <button class="room-btn danger" @click="handleExitRoom">
+                退出房间
+              </button>
+            </template>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -246,5 +413,241 @@ onMounted(() => {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
+}
+
+/* ---- drawer ---- */
+
+.drawer-toggle {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  z-index: 9998;
+  width: 40px;
+  height: 40px;
+  border: 1px solid @cream-dark;
+  border-right: none;
+  background: @cream;
+  color: @text-muted;
+  border-radius: 10px 0 0 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: all 0.3s;
+  box-shadow: -2px 2px 8px rgba(0,0,0,0.06);
+
+  &:hover {
+    background: @cream-dark;
+    color: @red;
+    width: 44px;
+  }
+
+  &.open {
+    right: 320px;
+    background: @red;
+    color: @cream;
+    border-color: @red;
+    box-shadow: none;
+    transform: translateY(-50%);
+    &:hover { background: @red-hover; }
+  }
+}
+
+.toggle-icon {
+  line-height: 1;
+  transition: transform 0.3s;
+}
+
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: rgba(92, 61, 46, 0.25);
+  backdrop-filter: blur(2px);
+}
+
+.drawer-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 320px;
+  height: 100vh;
+  z-index: 9999;
+  background: @cream;
+  border-left: 1px solid @cream-dark;
+  box-shadow: -8px 0 32px rgba(92, 61, 46, 0.12);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.drawer-header {
+  flex-shrink: 0;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid @cream-dark;
+}
+
+.drawer-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: @text;
+  letter-spacing: 0.3px;
+}
+
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px 24px;
+}
+
+/* ---- room section ---- */
+
+.room-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.room-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.room-icon {
+  font-size: 20px;
+}
+
+.room-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: @text;
+}
+
+.room-btn {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid @cream-dark;
+  background: transparent;
+  color: @text;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+
+  &:hover {
+    background: @cream-dark;
+    color: @red;
+  }
+
+  &.primary {
+    background: @red;
+    color: @cream;
+    border: none;
+    font-weight: 500;
+    &:hover { background: @red-hover; }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+
+  &.danger {
+    border-color: @red;
+    color: @red;
+    &:hover { background: rgba(195, 39, 43, 0.06); }
+  }
+
+  &.small {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
+
+.room-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.room-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid @cream-dark;
+  background: white;
+  color: @text;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+
+  &::placeholder { color: @text-muted; opacity: 0.7; }
+  &:focus { border-color: @red; }
+}
+
+.room-info {
+  background: @cream-dark;
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.room-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.room-info-label {
+  font-size: 13px;
+  color: @text-muted;
+}
+
+.room-info-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: @text;
+}
+
+/* ---- transitions ---- */
+
+.drawer-fade-enter-active,
+.drawer-fade-leave-active {
+  transition: opacity 0.3s;
+}
+.drawer-fade-enter-from,
+.drawer-fade-leave-to {
+  opacity: 0;
+}
+
+.drawer-slide-enter-active,
+.drawer-slide-leave-active {
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.drawer-slide-enter-from,
+.drawer-slide-leave-to {
+  transform: translateX(100%);
+}
+
+.form-expand-enter-active,
+.form-expand-leave-active {
+  transition: all 0.25s ease;
+  overflow: hidden;
+}
+.form-expand-enter-from,
+.form-expand-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+.form-expand-enter-to,
+.form-expand-leave-from {
+  max-height: 100px;
+  opacity: 1;
 }
 </style>

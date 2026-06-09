@@ -9,7 +9,15 @@ const router = createRouter({
     { path:'/login', component:()=>import('@/views/login/Login.vue')},
     { path:'/help', component:()=>import('@/views/help/Help.vue')},
     { path:'/admin',component:()=>import('@/views/admin/AdminLayout.vue')},
-    { path:'/music', component:()=>import('@/views/music/MusicSpace.vue')},
+    {
+      path:'/music',
+      component:()=>import('@/views/music/MusicLayout.vue'),
+      redirect:'/music/main',
+      children:[
+        { path:'main', component:()=>import('@/views/music/MusicSpace.vue')},
+        { path:'room/:ownerId', component:()=>import('@/views/music/MusicRoom.vue')},
+      ]
+    },
     {
       path:'/user',
       component:()=>import('@/views/user/UserHome.vue'),

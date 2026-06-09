@@ -28,8 +28,9 @@ public class MusicRoomServiceImpl implements MusicRoomService {
         Long currentId = BaseContext.getCurrentId();
         //校验房间是否已经存在
         if(musicRoomCache.isRoomExist(currentId)){
-            log.error("userId:{} 已创建房间", currentId);
-            throw new UserExistedException("已经有房间了哦...");
+            log.warn("userId:{} 已创建房间", currentId);
+//            throw new UserExistedException("已经有房间了哦...");
+            return;
         }
         musicRoomCache.createRoom(currentId);
         musicRoomCache.setUserInRoom(currentId,currentId);

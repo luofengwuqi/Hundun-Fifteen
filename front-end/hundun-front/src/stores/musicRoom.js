@@ -7,6 +7,7 @@ import {
   exitMusicRoomAPI,
   addSongToRoomAPI,
   deleteSongFromRoomAPI,
+  switchSongAPI,
 } from '@/api/musicRoom.js'
 
 export const useMusicRoomStore = defineStore('musicRoom', () => {
@@ -66,6 +67,14 @@ export const useMusicRoomStore = defineStore('musicRoom', () => {
     return res
   }
 
+  const switchSong = async (songId) => {
+    const res = await switchSongAPI({ songId })
+    if (res.code === 200 || res.code === 0) {
+      await fetchRoomData()
+    }
+    return res
+  }
+
   return {
     room,
     loading,
@@ -75,5 +84,6 @@ export const useMusicRoomStore = defineStore('musicRoom', () => {
     exitRoom,
     addSong,
     deleteSong,
+    switchSong,
   }
 })
