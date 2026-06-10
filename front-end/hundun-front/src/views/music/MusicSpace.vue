@@ -3,7 +3,7 @@ import { useMusicStore } from '@/stores/music.js'
 import { useMusicRoomStore } from '@/stores/musicRoom.js'
 import { useUserStore } from '@/stores/user.js'
 import { storeToRefs } from 'pinia'
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, onUnmounted, ref, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import defaultCover from '@/assets/img/music/defaultCover.png'
 import HundunHeader from '@/views/user/component/common/HundunHeader.vue'
@@ -22,7 +22,7 @@ const {
 } = storeToRefs(musicStore)
 const {
   fetchAllMusic, playSong, togglePlay,
-  prevSong, nextSong, togglePlayMode
+  prevSong, nextSong, togglePlayMode, seekTo
 } = musicStore
 
 const { room, loading: roomLoading } = storeToRefs(musicRoomStore)
@@ -35,6 +35,18 @@ const creating = ref(false)
 
 const ownerId = route.params.ownerId
 
+const searchQuery = ref('')
+const sortKey = ref('default')
+const isDragging = ref(false)
+const sortOpen = ref(false)
+
+const sortOptions = [
+  { value: 'default', label: '默认排序' },
+  { value: 'title', label: '按名称' },
+  { value: 'uploader', label: '按上传者' },
+  { value: 'duration', label: '按时长' },
+]
+
 const coverSrc = (item) => item?.coverUrl || defaultCover
 
 const formatTime = (t) => {
@@ -43,6 +55,82 @@ const formatTime = (t) => {
   const s = Math.floor(t % 60)
   return `${m}:${String(s).padStart(2, '0')}`
 }
+
+const progressPercent = computed(() => {
+  if (!duration.value) return 0
+  return (currentTime.value / duration.value) * 100
+})
+
+const filteredMusicList = computed(() => {
+  let list = musicList.value
+  if (searchQuery.value.trim()) {
+    const kw = searchQuery.value.trim().toLowerCase()
+    list = list.filter(
+      (m) => m.title.toLowerCase().includes(kw) || m.uploaderName?.toLowerCase().includes(kw)
+    )
+  }
+  if (sortKey.value === 'title') {
+    list = [...list].sort((a, b) => a.title.localeCompare(b.title))
+  } else if (sortKey.value === 'uploader') {
+    list = [...list].sort((a, b) => (a.uploaderName || '').localeCompare(b.uploaderName || ''))
+  } else if (sortKey.value === 'duration') {
+    list = [...list].sort((a, b) => (a.duration || 0) - (b.duration || 0))
+  }
+  return list
+})
+
+const sortLabel = computed(() => sortOptions.find((o) => o.value === sortKey.value)?.label || '排序')
+
+const toggleSort = () => {
+  sortOpen.value = !sortOpen.value
+}
+
+const selectSort = (val) => {
+  sortKey.value = val
+  sortOpen.value = false
+}
+
+const handleSortClickOutside = (e) => {
+  if (!e.target.closest('.sort-wrapper')) {
+    sortOpen.value = false
+  }
+}
+
+const handleSeek = (e) => {
+  if (!duration.value) return
+  const rect = e.currentTarget.getBoundingClientRect()
+  const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+  seekTo(ratio * duration.value)
+}
+
+const handleProgressMouseDown = (e) => {
+  if (!duration.value) return
+  isDragging.value = true
+  handleSeek(e)
+  document.addEventListener('mousemove', handleProgressMouseMove)
+  document.addEventListener('mouseup', handleProgressMouseUp)
+}
+
+const handleProgressMouseMove = (e) => {
+  if (!isDragging.value || !duration.value) return
+  const track = document.querySelector('.np-progress-track')
+  if (!track) return
+  const rect = track.getBoundingClientRect()
+  const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+  seekTo(ratio * duration.value)
+}
+
+const handleProgressMouseUp = () => {
+  isDragging.value = false
+  document.removeEventListener('mousemove', handleProgressMouseMove)
+  document.removeEventListener('mouseup', handleProgressMouseUp)
+}
+
+onUnmounted(() => {
+  document.removeEventListener('mousemove', handleProgressMouseMove)
+  document.removeEventListener('mouseup', handleProgressMouseUp)
+  document.removeEventListener('click', handleSortClickOutside)
+})
 
 const toggleDrawer = () => {
   drawerOpen.value = !drawerOpen.value
@@ -115,6 +203,7 @@ onMounted(async () => {
       // not in room yet
     }
   }
+  document.addEventListener('click', handleSortClickOutside)
 })
 
 watch(() => route.params.ownerId, async (id) => {
@@ -135,7 +224,7 @@ watch(() => route.params.ownerId, async (id) => {
       <div class="header">
         <button class="back-btn" @click="loginRouterPush">← 返回</button>
         <h1 class="title">🎵 音乐空间</h1>
-        <span class="count">{{ musicList.length }} 首</span>
+        <span class="count">{{ searchQuery ? `${filteredMusicList.length} / ${musicList.length}` : musicList.length }} 首</span>
       </div>
 
       <div v-if="currentMusic" class="now-playing">
@@ -156,24 +245,66 @@ watch(() => route.params.ownerId, async (id) => {
               {{ playMode === 'single' ? '↺' : playMode === 'random' ? '↯' : '↻' }}
             </button>
           </div>
+          <div class="np-progress">
+            <span class="np-time">{{ formatTime(currentTime) }}</span>
+            <div
+              class="np-progress-track"
+              @mousedown.prevent="handleProgressMouseDown"
+              @click="handleSeek"
+            >
+              <div class="np-progress-fill" :style="{ width: progressPercent + '%' }"></div>
+              <div
+                class="np-progress-thumb"
+                :class="{ active: isDragging }"
+                :style="{ left: progressPercent + '%' }"
+              ></div>
+            </div>
+            <span class="np-time">{{ formatTime(duration) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <input
+          v-model="searchQuery"
+          class="filter-input"
+          placeholder="搜索歌曲或上传者..."
+        />
+        <div class="sort-wrapper">
+          <div class="sort-trigger" :class="{ active: sortOpen, selected: sortKey !== 'default' }" @click.stop="toggleSort">
+            <span>{{ sortLabel }}</span>
+            <span class="sort-arrow" :class="{ up: sortOpen }">▼</span>
+          </div>
+          <Transition name="sort-drop">
+            <div v-if="sortOpen" class="sort-dropdown">
+              <div
+                v-for="opt in sortOptions"
+                :key="opt.value"
+                class="sort-option"
+                :class="{ checked: opt.value === sortKey }"
+                @click="selectSort(opt.value)"
+              >{{ opt.label }}</div>
+            </div>
+          </Transition>
         </div>
       </div>
 
       <div class="list">
         <div
-          v-for="(item, idx) in musicList"
+          v-for="(item, idx) in filteredMusicList"
           :key="item.id"
           class="song-item"
-          :class="{ active: idx === currentIndex }"
-          @click="playSong(idx)"
+          :class="{ active: item.id === currentMusic?.id }"
+          @click="playSong(musicList.findIndex((m) => m.id === item.id))"
         >
           <img :src="coverSrc(item)" alt="" class="item-cover" />
           <div class="item-info">
             <div class="item-title">{{ item.title }}</div>
             <div class="item-meta">{{ item.uploaderName }} · {{ formatTime(item.duration) }}</div>
           </div>
-          <div v-if="idx === currentIndex && isPlaying" class="playing-indicator">♫</div>
+          <div v-if="item.id === currentMusic?.id && isPlaying" class="playing-indicator">♫</div>
         </div>
+        <div v-if="!filteredMusicList.length" class="list-empty">没有找到匹配的歌曲</div>
       </div>
     </div>
 
@@ -408,6 +539,183 @@ watch(() => route.params.ownerId, async (id) => {
 .playing-indicator {
   font-size: 18px; color: @red;
   animation: pulse 1s ease-in-out infinite;
+}
+
+/* ---- progress bar ---- */
+
+.np-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.np-time {
+  font-size: 11px;
+  color: @text-muted;
+  min-width: 32px;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+.np-progress-track {
+  flex: 1;
+  height: 4px;
+  background: @cream-dark;
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+}
+
+.np-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, @red, @red-hover);
+  border-radius: 2px;
+  transition: width 0.1s linear;
+  pointer-events: none;
+}
+
+.np-progress-thumb {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  background: @red;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+  box-shadow: 0 0 0 2px @cream, 0 0 6px rgba(195, 39, 43, 0.3);
+
+  &.active {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+}
+
+.np-progress-track:hover .np-progress-thumb {
+  opacity: 1;
+}
+
+/* ---- filter bar ---- */
+
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.filter-input {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid @cream-dark;
+  background: white;
+  color: @text;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+
+  &::placeholder { color: @text-muted; opacity: 0.7; }
+  &:focus { border-color: @red; }
+}
+
+/* ---- sort dropdown ---- */
+
+.sort-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.sort-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1.5px solid @cream-dark;
+  background: white;
+  color: @text;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+
+  &:hover {
+    border-color: @red;
+  }
+
+  &.active {
+    border-color: @red;
+    box-shadow: 0 0 0 2px fade(@red, 12%);
+  }
+
+  &.selected {
+    color: @red;
+    border-color: @red;
+  }
+}
+
+.sort-arrow {
+  font-size: 8px;
+  color: inherit;
+  transition: transform 0.2s;
+
+  &.up {
+    transform: rotate(180deg);
+  }
+}
+
+.sort-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  min-width: 120px;
+  background: white;
+  border-radius: 10px;
+  border: 1.5px solid @cream-dark;
+  box-shadow: 0 4px 16px rgba(92, 61, 46, 0.12);
+  overflow: hidden;
+  z-index: 100;
+}
+
+.sort-option {
+  padding: 8px 14px;
+  font-size: 13px;
+  color: @text;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    background: @red;
+    color: white;
+  }
+
+  &.checked {
+    color: @red;
+    font-weight: 500;
+    background: @cream;
+  }
+}
+
+.sort-drop-enter-active,
+.sort-drop-leave-active {
+  transition: all 0.15s ease;
+}
+.sort-drop-enter-from,
+.sort-drop-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.list-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: @text-muted;
+  font-size: 14px;
 }
 
 @keyframes pulse {
