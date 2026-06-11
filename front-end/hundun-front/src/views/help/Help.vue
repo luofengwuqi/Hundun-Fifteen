@@ -50,7 +50,7 @@ const feedbackForm = ref({
 const feedbackTypes = [
   { label: 'Bug反馈', value: 'Bug反馈' },
   { label: '登录问题', value: '登录问题' },
-  // 后续可以继续添加其他类型
+  { label: '社区举报', value: '社区举报' },
 ]
 
 // 提交反馈

@@ -3,59 +3,57 @@ import { defineStore } from 'pinia'
 import { getArticleListAPI, updateArticleGoodAPI, updateArticleBadAPI } from '@/api/article'
 
 export const useArticleStore = defineStore('article', () => {
-
-  // 文章列表
   const articleList = ref([])
-  
-  // 用户投票状态记录 { articleId: 'good' | 'bad' | null }
-  const userVoteStatus = ref({})
-  
-  // 获取文章列表
+
+  const currentVoteStatus = ref({})
+
   const getArticleList = async () => {
     const res = await getArticleListAPI()
     articleList.value = res.data
     return res
   }
-  
-  // 设置用户投票状态
-  const setUserVoteStatus = (articleId, status) => {
-    userVoteStatus.value[articleId] = status
+
+  const setVoteStatus = (id, status) => {
+    currentVoteStatus.value[id] = status
   }
-  
-  // 获取用户投票状态
-  const getUserVoteStatus = (articleId) => {
-    return userVoteStatus.value[articleId] || null
+
+  const getVoteStatus = (id) => {
+    return currentVoteStatus.value[id] || null
   }
-  
-  // 点赞
-  const updateArticleGood = async (id) => {
-    const res = await updateArticleGoodAPI(id)
-    // 更新本地文章列表中的点赞数
+
+  const toggleGood = async (id) => {
+    const prev = currentVoteStatus.value[id]
+    await updateArticleGoodAPI(id)
     const article = articleList.value.find(item => item.id === id)
-    if (article) {
-      article.goodCount = (article.goodCount || 0) + 1
+    if (!article) return
+    if (prev === 'good') {
+      article.good = Math.max(0, (article.good || 0) - 1)
+      currentVoteStatus.value[id] = null
+    } else {
+      if (prev === 'bad') article.bad = Math.max(0, (article.bad || 0) - 1)
+      article.good = (article.good || 0) + 1
+      currentVoteStatus.value[id] = 'good'
     }
-    return res
   }
-  
-  // 点踩
-  const updateArticleBad = async (id) => {
-    const res = await updateArticleBadAPI(id)
-    // 更新本地文章列表中的点踩数
+
+  const toggleBad = async (id) => {
+    const prev = currentVoteStatus.value[id]
+    await updateArticleBadAPI(id)
     const article = articleList.value.find(item => item.id === id)
-    if (article) {
-      article.badCount = (article.badCount || 0) + 1
+    if (!article) return
+    if (prev === 'bad') {
+      article.bad = Math.max(0, (article.bad || 0) - 1)
+      currentVoteStatus.value[id] = null
+    } else {
+      if (prev === 'good') article.good = Math.max(0, (article.good || 0) - 1)
+      article.bad = (article.bad || 0) + 1
+      currentVoteStatus.value[id] = 'bad'
     }
-    return res
   }
 
   return {
-    articleList,
-    userVoteStatus,
-    getArticleList,
-    setUserVoteStatus,
-    getUserVoteStatus,
-    updateArticleGood,
-    updateArticleBad
+    articleList, currentVoteStatus,
+    getArticleList, setVoteStatus, getVoteStatus,
+    toggleGood, toggleBad
   }
 })

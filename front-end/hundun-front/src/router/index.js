@@ -26,10 +26,9 @@ const router = createRouter({
         { path:'info', component:()=>import('@/views/user/component/Info/Info.vue')},
         { path:'home', component:()=>import('@/views/user/component/Home/Home.vue')},
         { path:'insert', component:()=>import('@/views/user/component/Insert/Insert.vue')},
-        {
-          path:'select',
-          component:()=>import('@/views/user/component/Select/Select.vue')
-        }
+        { path:'select', component:()=>import('@/views/user/component/Select/Select.vue')},
+        { path:'article', component:()=>import('@/views/user/component/article/ArticleHome.vue')},
+        { path:'article/detail/:id', component:()=>import('@/views/user/component/article/ArticleDetail.vue')},
       ]
     },
   ],
