@@ -33,6 +33,15 @@ const joinFormVisible = ref(false)
 const joinPassword = ref('')
 const creating = ref(false)
 
+const uploadExpanded = ref(false)
+const uploadForm = ref({ title: '', uploaderName: '' })
+const selectedFile = ref(null)
+const selectedCoverFile = ref(null)
+const coverPreviewUrl = ref('')
+const uploading = ref(false)
+const uploadRef = ref(null)
+const coverUploadRef = ref(null)
+
 const ownerId = route.params.ownerId
 
 const searchQuery = ref('')
@@ -93,6 +102,136 @@ const selectSort = (val) => {
 const handleSortClickOutside = (e) => {
   if (!e.target.closest('.sort-wrapper')) {
     sortOpen.value = false
+  }
+}
+
+const getAudioDuration = (file) => {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const audio = new Audio(url)
+    audio.addEventListener('loadedmetadata', () => {
+      const duration = Math.round(audio.duration)
+      URL.revokeObjectURL(url)
+      resolve(duration)
+    })
+    audio.addEventListener('error', () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('无法解析音频文件'))
+    })
+  })
+}
+
+const compressImage = (file, maxWidth = 800, quality = 0.7) => {
+  return new Promise((resolve) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      let { width, height } = img
+      if (width > maxWidth) {
+        height = height * (maxWidth / width)
+        width = maxWidth
+      }
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0, width, height)
+      canvas.toBlob(
+        (blob) => {
+          const compressedFile = new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' })
+          URL.revokeObjectURL(url)
+          resolve(compressedFile)
+        },
+        'image/jpeg',
+        quality
+      )
+    }
+    img.src = url
+  })
+}
+
+const ALLOWED_IMAGE_EXT = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+const ALLOWED_AUDIO_EXT = ['.mp3', '.wav', '.flac', '.ogg', '.aac', '.m4a', '.wma']
+
+const checkExt = (name, allowed) => {
+  const ext = name.substring(name.lastIndexOf('.')).toLowerCase()
+  return allowed.includes(ext)
+}
+
+const handleUploadFileChange = (file) => {
+  if (!checkExt(file.name, ALLOWED_AUDIO_EXT)) {
+    ElMessage.warning(`不支持的文件格式，仅支持 ${ALLOWED_AUDIO_EXT.join(' / ')}`)
+    if (uploadRef.value) uploadRef.value.handleRemove(file)
+    return
+  }
+  selectedFile.value = file.raw
+  if (file.raw) {
+    getAudioDuration(file.raw).then(duration => {
+      // duration detected
+    }).catch(() => {})
+  }
+}
+
+const handleUploadCoverChange = (file) => {
+  if (!checkExt(file.name, ALLOWED_IMAGE_EXT)) {
+    ElMessage.warning(`不支持的图片格式，仅支持 ${ALLOWED_IMAGE_EXT.join(' / ')}`)
+    if (coverUploadRef.value) coverUploadRef.value.handleRemove(file)
+    return
+  }
+  selectedCoverFile.value = file.raw
+  coverPreviewUrl.value = URL.createObjectURL(file.raw)
+}
+
+const handleUploadSubmit = async () => {
+  if (!uploadForm.value.title) {
+    ElMessage.warning('请输入歌曲名')
+    return
+  }
+  if (!selectedFile.value) {
+    ElMessage.warning('请选择音频文件')
+    return
+  }
+
+  uploading.value = true
+  try {
+    let coverUrl = ''
+    if (selectedCoverFile.value) {
+      const compressed = await compressImage(selectedCoverFile.value)
+      const coverRes = await musicStore.uploadCover(compressed)
+      if (coverRes.code !== 200 && coverRes.code !== 0) {
+        ElMessage.error('封面上传失败')
+        return
+      }
+      coverUrl = coverRes.data
+    }
+
+    const uploadRes = await musicStore.uploadAudio(selectedFile.value)
+    if (uploadRes.code !== 200 && uploadRes.code !== 0) {
+      ElMessage.error('音频上传失败')
+      return
+    }
+    const audioUrl = uploadRes.data
+
+    await musicStore.addMusic({
+      title: uploadForm.value.title,
+      duration: 0,
+      coverUrl,
+      audioUrl,
+      uploaderName: uploadForm.value.uploaderName || userStore.userInfo.username || ''
+    })
+    ElMessage.success('上传成功(´｡• ᵕ •｡`)')
+    uploadExpanded.value = false
+    uploadForm.value = { title: '', uploaderName: '' }
+    selectedFile.value = null
+    selectedCoverFile.value = null
+    coverPreviewUrl.value = ''
+    if (uploadRef.value) uploadRef.value.clearFiles()
+    if (coverUploadRef.value) coverUploadRef.value.clearFiles()
+  } catch (err) {
+    console.error('上传音乐失败:', err)
+    ElMessage.error('上传失败，请重试')
+  } finally {
+    uploading.value = false
   }
 }
 
@@ -222,7 +361,7 @@ watch(() => route.params.ownerId, async (id) => {
     <HundunHeader></HundunHeader>
     <div class="music-space">
       <div class="header">
-        <button class="back-btn" @click="loginRouterPush">← 返回</button>
+        <button class="back-btn" @click="loginRouterPush()">← 返回</button>
         <h1 class="title">🎵 音乐空间</h1>
         <span class="count">{{ searchQuery ? `${filteredMusicList.length} / ${musicList.length}` : musicList.length }} 首</span>
       </div>
@@ -327,32 +466,32 @@ watch(() => route.params.ownerId, async (id) => {
 
         <div class="drawer-body">
           <!-- music room section -->
-          <div class="room-section">
-            <div class="room-section-header">
-              <span class="room-icon">🎶</span>
-              <span class="room-label">音乐房间</span>
+          <div class="section">
+            <div class="section-header">
+              <span class="section-icon">🎶</span>
+              <span class="section-label">音乐房间</span>
             </div>
 
             <!-- not in room -->
             <template v-if="!room">
-              <button class="room-btn" @click="handleCreateRoom" :disabled="creating || roomLoading">
+              <button class="drawer-btn" @click="handleCreateRoom" :disabled="creating || roomLoading">
                 {{ creating ? '创建中...' : '创建音乐房间' }}
               </button>
 
-              <button class="room-btn" @click="joinFormVisible = !joinFormVisible">
+              <button class="drawer-btn" @click="joinFormVisible = !joinFormVisible">
                 加入音乐房间
               </button>
 
               <Transition name="form-expand">
-                <div v-if="joinFormVisible" class="room-form">
+                <div v-if="joinFormVisible" class="form-stack">
                   <input
                     v-model="joinPassword"
                     type="password"
-                    class="room-input"
+                    class="drawer-input"
                     placeholder="输入房间密码"
                     @keyup.enter="handleJoinRoom"
                   />
-                  <button class="room-btn primary small" @click="handleJoinRoom" :disabled="roomLoading">
+                  <button class="drawer-btn primary small" @click="handleJoinRoom" :disabled="roomLoading">
                     确认加入
                   </button>
                 </div>
@@ -361,20 +500,90 @@ watch(() => route.params.ownerId, async (id) => {
 
             <!-- in room -->
             <template v-else>
-              <div class="room-info">
-                <div class="room-info-row">
-                  <span class="room-info-label">房主ID</span>
-                  <span class="room-info-value">{{ room.userId }}</span>
+              <div class="info-card">
+                <div class="info-row">
+                  <span class="info-label">房主ID</span>
+                  <span class="info-value">{{ room.userId }}</span>
                 </div>
-                <div class="room-info-row">
-                  <span class="room-info-label">歌单</span>
-                  <span class="room-info-value">{{ room.musicIdList?.length || 0 }} 首</span>
+                <div class="info-row">
+                  <span class="info-label">歌单</span>
+                  <span class="info-value">{{ room.musicIdList?.length || 0 }} 首</span>
                 </div>
               </div>
-              <button class="room-btn danger" @click="handleExitRoom">
+              <button class="drawer-btn danger" @click="handleExitRoom">
                 退出房间
               </button>
             </template>
+          </div>
+
+          <!-- upload music section -->
+          <div class="section">
+            <div class="section-header" @click="uploadExpanded = !uploadExpanded" style="cursor:pointer">
+              <span class="section-icon">⬆</span>
+              <span class="section-label">上传音乐</span>
+              <span class="section-arrow" :class="{ up: uploadExpanded }">▼</span>
+            </div>
+
+            <Transition name="form-expand">
+              <div v-if="uploadExpanded" class="form-stack">
+                <div class="form-field">
+                  <label class="form-label">歌曲名</label>
+                  <input
+                    v-model="uploadForm.title"
+                    class="drawer-input"
+                    placeholder="请输入歌曲名"
+                  />
+                </div>
+                <div class="form-field">
+                  <label class="form-label">上传者</label>
+                  <input
+                    v-model="uploadForm.uploaderName"
+                    class="drawer-input"
+                    placeholder="可选"
+                  />
+                </div>
+                <div class="form-row">
+                  <div class="form-field flex-1">
+                    <label class="form-label">封面图片</label>
+                    <div class="upload-area">
+                      <el-upload
+                        ref="coverUploadRef"
+                        :auto-upload="false"
+                        :show-file-list="true"
+                        accept="image/*"
+                        :on-change="handleUploadCoverChange"
+                        :limit="1"
+                      >
+                        <el-button size="small" class="upload-btn">选择图片</el-button>
+                      </el-upload>
+                      <img v-if="coverPreviewUrl" :src="coverPreviewUrl" class="cover-preview" />
+                    </div>
+                  </div>
+                  <div class="form-field flex-1">
+                    <label class="form-label">音频文件</label>
+                    <div class="upload-area">
+                      <el-upload
+                        ref="uploadRef"
+                        :auto-upload="false"
+                        :show-file-list="true"
+                        accept="audio/*"
+                        :on-change="handleUploadFileChange"
+                        :limit="1"
+                      >
+                        <el-button size="small" class="upload-btn">选择文件</el-button>
+                      </el-upload>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  class="drawer-btn primary"
+                  :disabled="uploading"
+                  @click="handleUploadSubmit"
+                >
+                  {{ uploading ? '上传中...' : '确认上传' }}
+                </button>
+              </div>
+            </Transition>
           </div>
         </div>
       </div>
@@ -811,32 +1020,46 @@ watch(() => route.params.ownerId, async (id) => {
   padding: 16px 24px 24px;
 }
 
-/* ---- room section ---- */
+/* ---- drawer sections ---- */
 
-.room-section {
+.section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
-.room-section-header {
+.section + .section {
+  padding-top: 16px;
+  border-top: 1px solid @cream-dark;
+}
+
+.section-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 4px;
+  user-select: none;
 }
 
-.room-icon {
-  font-size: 20px;
+.section-icon {
+  font-size: 18px;
+  line-height: 1;
 }
 
-.room-label {
+.section-label {
   font-size: 15px;
   font-weight: 600;
   color: @text;
 }
 
-.room-btn {
+.section-arrow {
+  margin-left: auto;
+  font-size: 9px;
+  color: @text-muted;
+  transition: transform 0.25s;
+  &.up { transform: rotate(180deg); }
+}
+
+.drawer-btn {
   width: 100%;
   padding: 10px 16px;
   border-radius: 10px;
@@ -874,14 +1097,36 @@ watch(() => route.params.ownerId, async (id) => {
   }
 }
 
-.room-form {
+.form-stack {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   overflow: hidden;
 }
 
-.room-input {
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.flex-1 {
+  flex: 1;
+  min-width: 0;
+}
+
+.form-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: @text-muted;
+}
+
+.drawer-input {
   width: 100%;
   box-sizing: border-box;
   padding: 10px 12px;
@@ -897,7 +1142,7 @@ watch(() => route.params.ownerId, async (id) => {
   &:focus { border-color: @red; }
 }
 
-.room-info {
+.info-card {
   background: @cream-dark;
   border-radius: 10px;
   padding: 12px 16px;
@@ -906,21 +1151,45 @@ watch(() => route.params.ownerId, async (id) => {
   gap: 8px;
 }
 
-.room-info-row {
+.info-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.room-info-label {
+.info-label {
   font-size: 13px;
   color: @text-muted;
 }
 
-.room-info-value {
+.info-value {
   font-size: 13px;
   font-weight: 600;
   color: @text;
+}
+
+.upload-area {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.upload-btn {
+  background: @red !important;
+  border-color: @red !important;
+  color: @cream !important;
+  &:hover {
+    background: @red-hover !important;
+    border-color: @red-hover !important;
+  }
+}
+
+.cover-preview {
+  width: 80px;
+  height: 80px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid @cream-dark;
 }
 
 /* ---- transitions ---- */
