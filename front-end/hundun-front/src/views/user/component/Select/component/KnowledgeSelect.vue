@@ -1,15 +1,20 @@
 <script setup>
-// TODO: 添加知识收藏相关的逻辑
+import { computed } from 'vue'
+import { useUserStore } from '@/stores/user.js'
+import FunctionDisabled from './FunctionDisabled.vue'
+
+const userStore = useUserStore()
+const enabled = computed(() => userStore.userModelStatus?.knowledge === 1)
 </script>
 
 <template>
-  <div class="knowledge-select select-panel">
+  <FunctionDisabled v-if="!enabled" module-name="知识" />
+  <div v-else class="knowledge-select select-panel">
     <div class="card-header">
       <h3 class="card-title">知识收藏 📚</h3>
     </div>
     <div class="card-content">
       <p class="placeholder-text">知识收藏功能开发中... (｡•̀ᴗ-)✧</p>
-      <!-- TODO: 添加知识收藏列表或表单 -->
     </div>
   </div>
 </template>

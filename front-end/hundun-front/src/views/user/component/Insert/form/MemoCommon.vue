@@ -1,10 +1,15 @@
 <script setup>
 import { reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useUserStore } from '@/stores/user.js'
 import { useMemoStore } from '@/stores/memo.js'
+import FeatureDisabled from './FeatureDisabled.vue'
 
 // 定义事件
 const emit = defineEmits(['hide'])
+
+const userStore = useUserStore()
+const memoEnabled = computed(() => userStore.userModelStatus?.memo === 1)
 
 // 引入 memo store
 const memoStore = useMemoStore()
@@ -149,7 +154,8 @@ const statusText = computed(() => {
 </script>
 
 <template>
-  <div class="memo-common">
+  <FeatureDisabled v-if="!memoEnabled" title="备忘未启用 (灬º﹃º灬)" message="使用备忘录功能请先启用「备忘」模块" />
+  <div v-else class="memo-common">
     <div class="card-header">
       <h3 class="card-title">整点计划(｡•̀ᴗ-)✧</h3>
     </div>

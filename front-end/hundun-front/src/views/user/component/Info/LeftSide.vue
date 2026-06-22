@@ -2,7 +2,7 @@
 import { useUserStore } from '@/stores/user.js'
 import { computed, ref } from 'vue'
 import defaultAvatar from '@/assets/img/common/user.jpg'
-import { User, Picture, Clock } from '@element-plus/icons-vue'
+import { User, Picture, Clock, Setting } from '@element-plus/icons-vue'
 import { OSS_DOMAIN } from '@/utils/config.js'
 
 const userStore = useUserStore()
@@ -25,6 +25,7 @@ const activeIndex = ref(0)
 const menuItems = [
   { name: '账号管理', icon: User, type: 0 },
   { name: '更改头像', icon: Picture, type: 1 },
+  { name: '模块开启情况', icon: Setting, type: 3 },
   { name: '敬请期待', icon: Clock, type: 2 }
 ]
 

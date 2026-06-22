@@ -1,63 +1,16 @@
 <script setup>
-import { onMounted, ref } from 'vue'
-import { ElMessage } from 'element-plus'
-import { useMemoStore } from '@/stores/memo.js'
-import { useMemoPanelFocus } from './memo/composables/useMemoPanelFocus.js'
-import MemoTodoPanel from './memo/MemoTodoPanel.vue'
-import MemoImportantPanel from './memo/MemoImportantPanel.vue'
+import { computed } from 'vue'
+import { useUserStore } from '@/stores/user.js'
+import FunctionDisabled from './FunctionDisabled.vue'
+import MemoContent from './MemoContent.vue'
 
-const memoStore = useMemoStore()
-const loading = ref(false)
-
-const {
-  toggleTodo,
-  toggleImportant,
-  isTodoFocused,
-  isImportantFocused,
-  isTodoCollapsed,
-  isImportantCollapsed,
-  focusClasses
-} = useMemoPanelFocus()
-
-const loadMemos = async () => {
-  loading.value = true
-  try {
-    await Promise.all([
-      memoStore.getCommonMemos('all'),
-      memoStore.getImportantMemos()
-    ])
-  } catch (e) {
-    console.error(e)
-    if (!memoStore.commonMemos.length) {
-      ElMessage.error('加载备忘录失败')
-    }
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(() => {
-  loadMemos()
-})
+const userStore = useUserStore()
+const enabled = computed(() => userStore.userModelStatus?.memo === 1)
 </script>
 
 <template>
-  <div class="memo-select select-panel" :class="focusClasses">
-    <MemoTodoPanel
-      :loading="loading"
-      :collapsed="isTodoCollapsed"
-      :expanded="isTodoFocused"
-      :body-hidden="isTodoCollapsed"
-      @toggle="toggleTodo"
-    />
-    <MemoImportantPanel
-      :loading="loading"
-      :collapsed="isImportantCollapsed"
-      :expanded="isImportantFocused"
-      :body-hidden="isImportantCollapsed"
-      @toggle="toggleImportant"
-    />
-  </div>
+  <FunctionDisabled v-if="!enabled" module-name="备忘" />
+  <MemoContent v-else />
 </template>
 
 <style lang="less">

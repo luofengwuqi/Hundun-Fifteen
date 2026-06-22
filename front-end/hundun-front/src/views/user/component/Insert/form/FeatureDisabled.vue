@@ -1,6 +1,7 @@
 <script setup>
-// 定义组件属性
-const props = defineProps({
+import { useRouter } from 'vue-router'
+
+defineProps({
   title: {
     type: String,
     default: '功能未启用 (灬º﹃º灬)'
@@ -14,6 +15,12 @@ const props = defineProps({
     default: '🔒'
   }
 })
+
+const router = useRouter()
+
+const goToInfo = () => {
+  router.push('/user/info')
+}
 </script>
 
 <template>
@@ -23,6 +30,7 @@ const props = defineProps({
     </div>
     <h3 class="title">{{ title }}</h3>
     <p class="message">{{ message }}</p>
+    <button class="goto-btn" @click="goToInfo">前往设置</button>
   </div>
 </template>
 
@@ -62,11 +70,25 @@ const props = defineProps({
 }
 
 .message {
-  margin: 0;
+  margin: 0 0 14px;
   font-size: 12px;
   color: #666;
   line-height: 1.6;
 }
 
+.goto-btn {
+  padding: 7px 20px;
+  background: #C3272B;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
 
+  &:hover {
+    background: #D64A4F;
+  }
+}
 </style>

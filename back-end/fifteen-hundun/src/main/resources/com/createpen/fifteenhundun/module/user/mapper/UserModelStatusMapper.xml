@@ -16,6 +16,9 @@
             <if test="memo != null">
                 memo = #{memo},
             </if>
+            <if test="music != null">
+                music = #{music},
+            </if>
         </set>
         WHERE user_id = #{userId}
     </update>

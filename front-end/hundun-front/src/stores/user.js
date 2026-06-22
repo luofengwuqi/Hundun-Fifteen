@@ -79,6 +79,31 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  // 禁用分类模块
+  const disableCategory = async (categoryKey) => {
+    try {
+      const userId = userInfo.value.id
+      if (!userId) {
+        throw new Error('用户ID不存在')
+      }
+
+      const updateData = {
+        userId,
+        ...userModelStatus.value,
+        [categoryKey]: 0
+      }
+
+      await updateUserModelStatus(updateData)
+
+      if (userModelStatus.value) {
+        userModelStatus.value[categoryKey] = 0
+      }
+    } catch (error) {
+      console.error('禁用分类失败:', error)
+      throw error
+    }
+  }
+
 
   return {
     token,
@@ -88,6 +113,7 @@ export const useUserStore = defineStore('user', () => {
     initUserInfo,
     userModelStatus,
     initUserModelStatus,
-    enableCategory
+    enableCategory,
+    disableCategory
   }
 })

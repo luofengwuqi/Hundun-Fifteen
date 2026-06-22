@@ -29,15 +29,15 @@ const hideOverlay = () => {
 const goBack = async () => {
   const status = Number(userStore.userInfo.status)
   if(isNaN(status) || status === undefined){
-    await router.replace('/login')
+    await router.push('/login')
   }
   else if(status >= 2){
-    await router.replace('/admin')
+    await router.push('/admin')
   }
   else if(status < 2 && status > 0){
-    await router.replace('/user')
+    await router.push('/user')
   }else{
-    await router.replace('/login')
+    await router.push('/login')
   }
 }
 // 反馈表单数据
