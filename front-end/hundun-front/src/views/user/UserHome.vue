@@ -1,16 +1,26 @@
 <script setup>
 
 import HundunHeader from '@/views/user/component/common/HundunHeader.vue'
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user.js'
+import GuideOverlay from '@/views/user/component/guide/GuideOverlay.vue'
 
 const userStore = useUserStore()
+const showGuide = ref(false)
+
 onMounted( async () => {
   if(!userStore.userModelStatus || Object.keys(userStore.userModelStatus).length === 0){
     await userStore.initUserModelStatus()
     console.log(userStore.userModelStatus)
   }
+  if (userStore.userModelStatus.isNewUser === 1) {
+    showGuide.value = true
+  }
 })
+
+const handleGuideClose = () => {
+  showGuide.value = false
+}
 </script>
 
 <template>
@@ -25,6 +35,7 @@ onMounted( async () => {
         </transition>
       </router-view>
     </div>
+    <GuideOverlay v-if="showGuide" @close="handleGuideClose" />
   </div>
 </template>
 

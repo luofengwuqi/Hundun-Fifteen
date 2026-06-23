@@ -19,6 +19,9 @@
             <if test="music != null">
                 music = #{music},
             </if>
+            <if test="isNewUser != null">
+                is_new_user = #{isNewUser},
+            </if>
         </set>
         WHERE user_id = #{userId}
     </update>

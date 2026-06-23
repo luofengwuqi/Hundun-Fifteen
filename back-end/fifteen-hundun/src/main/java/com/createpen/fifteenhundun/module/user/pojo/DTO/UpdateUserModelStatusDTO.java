@@ -30,5 +30,10 @@ public class UpdateUserModelStatusDTO {
 
     private Integer music;
 
+    /**
+     * 是否新用户 0否 1是
+     */
+    private Integer isNewUser;
+
     private Long userId;
 }

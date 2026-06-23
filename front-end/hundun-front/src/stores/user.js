@@ -109,6 +109,30 @@ export const useUserStore = defineStore('user', () => {
     userModelStatus.value = {}
   }
 
+  const setNewUserStatus = async (isNewUser) => {
+    const userId = userInfo.value.id
+    if (!userId) throw new Error('用户ID不存在')
+    const updateData = {
+      userId,
+      ...userModelStatus.value,
+      isNewUser
+    }
+    await updateUserModelStatus(updateData)
+    userModelStatus.value.isNewUser = isNewUser
+  }
+
+  const batchUpdateModules = async (modules) => {
+    const userId = userInfo.value.id
+    if (!userId) throw new Error('用户ID不存在')
+    const updateData = {
+      userId,
+      ...userModelStatus.value,
+      ...modules
+    }
+    await updateUserModelStatus(updateData)
+    Object.assign(userModelStatus.value, modules)
+  }
+
   return {
     token,
     setToken,
@@ -119,6 +143,8 @@ export const useUserStore = defineStore('user', () => {
     initUserModelStatus,
     clearUserModelStatus,
     enableCategory,
-    disableCategory
+    disableCategory,
+    setNewUserStatus,
+    batchUpdateModules
   }
 })
