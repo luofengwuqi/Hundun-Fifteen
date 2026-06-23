@@ -29,6 +29,7 @@ const router = createRouter({
         { path:'select', component:()=>import('@/views/user/component/Select/Select.vue')},
         { path:'article', component:()=>import('@/views/user/component/article/ArticleHome.vue')},
         { path:'article/detail/:id', component:()=>import('@/views/user/component/article/ArticleDetail.vue')},
+        { path:'disabled', component:()=>import('@/views/user/component/common/ModuleDisabled.vue')},
       ]
     },
   ],
@@ -62,6 +63,25 @@ router.beforeEach(async (to) => {
       userStore.setUserInfo({})
       userStore.setToken('')
       return '/login'
+    }
+  }
+
+  // 模块启用检查
+  if (to.path.startsWith('/user/article')) {
+    if (!userStore.userModelStatus || Object.keys(userStore.userModelStatus).length === 0) {
+      await userStore.initUserModelStatus()
+    }
+    if (userStore.userModelStatus.knowledge !== 1) {
+      return '/user/disabled?module=knowledge'
+    }
+  }
+
+  if (to.path.startsWith('/music')) {
+    if (!userStore.userModelStatus || Object.keys(userStore.userModelStatus).length === 0) {
+      await userStore.initUserModelStatus()
+    }
+    if (userStore.userModelStatus.music !== 1) {
+      return '/user/disabled?module=music'
     }
   }
 
