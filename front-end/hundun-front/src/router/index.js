@@ -52,6 +52,7 @@ router.beforeEach(async (to) => {
   if (to.path === '/login') {
     userStore.setUserInfo({})
     userStore.setToken('')
+    userStore.clearUserModelStatus()
     return true
   }
 

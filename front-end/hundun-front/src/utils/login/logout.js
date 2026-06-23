@@ -27,4 +27,5 @@ export const logout = async ()=> {
   // 使用 store 的方法清除状态(setter 会检查 localStorage,所以先清除)
   userStore.setToken('')
   userStore.setUserInfo({})
+  userStore.clearUserModelStatus()
 }

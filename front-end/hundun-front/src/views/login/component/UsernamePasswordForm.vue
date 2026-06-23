@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, onUnmounted } from 'vue'
 import { loginByUsernameAndPassword } from '@/api/user.js'
 import { useUserStore } from '@/stores/user.js'
 import { useRouter } from 'vue-router'
@@ -33,7 +33,13 @@ const router = useRouter()
 const formRef = ref(null)
 // 密码显示控制
 const showPassword = ref(false)
+const isButtonDisabled = ref(false)
+let disableTimer = null
+onUnmounted(() => clearTimeout(disableTimer))
 const handleLogin = async () => {
+  isButtonDisabled.value = true
+  clearTimeout(disableTimer)
+  disableTimer = setTimeout(() => { isButtonDisabled.value = false }, 3000)
   await formRef.value.validate(async (valid) => {
     if (valid) {
       console.log('验证通过，提交登录', form)
@@ -120,11 +126,11 @@ const handleForgotPassword = () => {
     </el-form-item>
     <div class="buttons">
       <el-form-item class="button-group">
-        <el-button type="primary" @click="handleLogin">登录</el-button>
+        <el-button type="primary" @click="handleLogin" :disabled="isButtonDisabled">登录</el-button>
         <el-button type="primary" @click="handleRegister">注册</el-button>
 <!--        TODO : 这里后续要删除-->
-        <el-button type="primary" @click="adminLogin">测试按钮:管理员登录</el-button>
-        <el-button type="primary" @click="userLogin">测试按钮:用户登录</el-button>
+        <el-button type="primary" @click="adminLogin" :disabled="isButtonDisabled">测试按钮:管理员登录</el-button>
+        <el-button type="primary" @click="userLogin" :disabled="isButtonDisabled">测试按钮:用户登录</el-button>
       </el-form-item>
     </div>
       <span class="forgot-password" @click="handleForgotPassword">忘记密码</span>

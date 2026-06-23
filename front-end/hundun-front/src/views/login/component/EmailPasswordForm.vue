@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, onUnmounted } from 'vue'
 import { loginByEmailAndPassword } from '@/api/user.js'
 import { useUserStore } from '@/stores/user.js'
 import { useRouter } from 'vue-router'
@@ -32,7 +32,13 @@ const router = useRouter()
 const formRef = ref(null)
 // 密码显示控制
 const showPassword = ref(false)
+const isButtonDisabled = ref(false)
+let disableTimer = null
+onUnmounted(() => clearTimeout(disableTimer))
 const handleLogin = async () => {
+  isButtonDisabled.value = true
+  clearTimeout(disableTimer)
+  disableTimer = setTimeout(() => { isButtonDisabled.value = false }, 3000)
   await formRef.value.validate(async (valid) => {
     if (valid) {
       console.log('验证通过，提交登录', form)
@@ -94,7 +100,7 @@ const handleForgotPassword = () => {
       </el-form-item>
       <div class="buttons">
         <el-form-item class="button-group">
-          <el-button type="primary" @click="handleLogin">登录</el-button>
+          <el-button type="primary" @click="handleLogin" :disabled="isButtonDisabled">登录</el-button>
           <el-button type="primary" @click="handleRegister">注册</el-button>
         </el-form-item>
       </div>

@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, onUnmounted } from 'vue'
 import { loginByEmailAndCode, sendEmailCode } from '@/api/user.js'
 import { useUserStore } from '@/stores/user.js'
 import { useRouter } from 'vue-router'
@@ -28,7 +28,13 @@ const rules = {
 const userStore = useUserStore()
 const router = useRouter()
 const formRef = ref(null)
+const isButtonDisabled = ref(false)
+let disableTimer = null
+onUnmounted(() => clearTimeout(disableTimer))
 const handleLogin = async () => {
+  isButtonDisabled.value = true
+  clearTimeout(disableTimer)
+  disableTimer = setTimeout(() => { isButtonDisabled.value = false }, 3000)
   await formRef.value.validate(async (valid) => {
     if (valid) {
       console.log('验证通过，提交登录', form)
@@ -118,14 +124,14 @@ const handleForgotPassword = () => {
       </el-form-item>
       <el-form-item prop="password" class="send-box">
         <el-input v-model="form.code" placeholder="请输入验证码" prefix-icon="lock"></el-input>
-        <button type="button" class="send" @click="handleSend(form.email)" :disabled="isWaiting">
+        <button type="button" class="send" @click="handleSend(form.email)" :disabled="isWaiting || isButtonDisabled">
           <span v-if="isWaiting">请耐心等待 ({{ countdown }}秒)</span>
           <span v-else>发送邀请码</span>
         </button>
       </el-form-item>
       <div class="buttons">
         <el-form-item class="button-group">
-          <el-button type="primary" @click="handleLogin">登录</el-button>
+          <el-button type="primary" @click="handleLogin" :disabled="isButtonDisabled">登录</el-button>
           <el-button type="primary" @click="handleRegister">注册</el-button>
         </el-form-item>
       </div>

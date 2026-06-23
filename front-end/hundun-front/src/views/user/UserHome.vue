@@ -6,7 +6,7 @@ import { useUserStore } from '@/stores/user.js'
 
 const userStore = useUserStore()
 onMounted( async () => {
-  if(!userStore.userModelStatus){
+  if(!userStore.userModelStatus || Object.keys(userStore.userModelStatus).length === 0){
     await userStore.initUserModelStatus()
     console.log(userStore.userModelStatus)
   }

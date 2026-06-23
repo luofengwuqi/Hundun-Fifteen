@@ -105,6 +105,10 @@ export const useUserStore = defineStore('user', () => {
   }
 
 
+  const clearUserModelStatus = () => {
+    userModelStatus.value = {}
+  }
+
   return {
     token,
     setToken,
@@ -113,6 +117,7 @@ export const useUserStore = defineStore('user', () => {
     initUserInfo,
     userModelStatus,
     initUserModelStatus,
+    clearUserModelStatus,
     enableCategory,
     disableCategory
   }
