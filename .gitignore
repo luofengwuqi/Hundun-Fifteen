@@ -9,6 +9,7 @@
 # 忽略瞎写的txt文件
 nihao.txt
 *.txt
+!file/guide/*.txt
 # 忽略IDE配置文件（IntelliJ系列）
 .idea/
 misc.xml
