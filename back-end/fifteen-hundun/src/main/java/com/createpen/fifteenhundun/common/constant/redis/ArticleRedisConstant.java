@@ -1,6 +1,9 @@
 package com.createpen.fifteenhundun.common.constant.redis;
 
 public class ArticleRedisConstant {
+    //单个文章缓存article:${articleId}
+    public static final String ARTICLE = "article:";
+    public static final Integer ARTICLE_EXPIRE = 30;
     //所有文章的缓存article:list
     public static final String ARTICLE_LIST = "article:list";
     //所有文章缓存的过期时间

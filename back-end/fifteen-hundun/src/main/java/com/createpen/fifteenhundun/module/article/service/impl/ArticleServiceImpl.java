@@ -1,6 +1,7 @@
 package com.createpen.fifteenhundun.module.article.service.impl;
 
 import com.createpen.fifteenhundun.common.context.BaseContext;
+import com.createpen.fifteenhundun.common.exception.MyException.UserNotFoundException;
 import com.createpen.fifteenhundun.module.article.cache.ArticleGoodBadRedisService;
 import com.createpen.fifteenhundun.module.article.cache.ArticleRedisService;
 import com.createpen.fifteenhundun.module.article.cache.ArticleRedisToMysqlService;
@@ -9,8 +10,11 @@ import com.createpen.fifteenhundun.module.article.pojo.DTO.InsertArticleDTO;
 import com.createpen.fifteenhundun.module.article.pojo.Entity.Article;
 import com.createpen.fifteenhundun.module.article.pojo.Entity.ArticleUserInteract;
 import com.createpen.fifteenhundun.module.article.service.ArticleService;
+import com.createpen.fifteenhundun.module.user.pojo.Entity.User;
+import com.createpen.fifteenhundun.module.user.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.createpen.fifteenhundun.module.article.pojo.DTO.*;
@@ -23,27 +27,33 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.createpen.fifteenhundun.common.constant.status.UserStatusConstant.STATUS_ADMIN;
+
 @Slf4j
 @Service
 public class ArticleServiceImpl implements ArticleService {
 
+    private final ArticleService articleService;
+    private final UserService userService;
     private final ArticleGoodBadRedisService articleGoodBadRedisService;
     private final ArticleRedisToMysqlService rTmService;
     private final ArticleRedisService articleRedisService;
     private final ArticleMapper articleMapper;
 
 
-    public ArticleServiceImpl(ArticleMapper articleMapper, ArticleRedisService articleRedisService, ArticleRedisToMysqlService rTmService, ArticleGoodBadRedisService articleGoodBadRedisService) {
+    public ArticleServiceImpl(ArticleMapper articleMapper, ArticleRedisService articleRedisService, ArticleRedisToMysqlService rTmService, ArticleGoodBadRedisService articleGoodBadRedisService, UserService userService, @Lazy ArticleService articleService) {
         this.articleMapper = articleMapper;
         this.articleRedisService = articleRedisService;
         this.rTmService = rTmService;
         this.articleGoodBadRedisService = articleGoodBadRedisService;
+        this.userService = userService;
+        this.articleService = articleService;
     }
 
     @Override
     public List<Article> selectArticleList() {
         List<Article> listInRedis = articleRedisService.selectArticleListInRedis();
-        if(listInRedis!=null){
+        if (listInRedis != null) {
             //查到了 直接返回
             log.info("命中缓存");
             return listInRedis;
@@ -53,36 +63,38 @@ public class ArticleServiceImpl implements ArticleService {
         List<Article> list = articleMapper.selectArticleList();
         articleRedisService.insertArticleListInRedis(list);
         return list;
-        }
+    }
 
     @Override
     public void insertArticle(InsertArticleDTO dto) {
         Article article = new Article();
         BeanUtils.copyProperties(dto, article);
         article.setCreatedAt(LocalDateTime.now());
+        article.setUserId(BaseContext.getCurrentId());
         articleMapper.insertArticle(article);
-
+        //插入完文章后 删除redis里的文章列表
         articleRedisService.deleteArticleListInRedis();
     }
 
     /*
         下面的两个方法只操作redis里面的点赞/点踩相关的东西
-        //todoed:已解决点踩高并发下事务原子性问题
+        //todoEd:已解决点踩高并发下事务原子性问题
     */
     @Override
     public void updateArticleGood(Long articleId) {
         //检查redis里面是否存过count相关数据了 如果没存就从数据库初始化
-        if(!articleRedisService.isGoodExist(articleId)){
+        if (!articleRedisService.isGoodExist(articleId)) {
             articleRedisService.initArticleGoodOrBadCount(articleId);
         }
         //执行lua点赞脚本
         Long result = articleGoodBadRedisService.doGoodScript(articleId, BaseContext.getCurrentId());
         log.info("用户 {} 对文章 {} 点赞操作结果: {}", BaseContext.getCurrentId(), articleId, result == 1 ? "已点赞" : "已取消点赞");
-        }
+    }
+
     @Override
     public void updateArticleBad(Long articleId) {
 
-        if(!articleRedisService.isBadExist(articleId)){
+        if (!articleRedisService.isBadExist(articleId)) {
             articleRedisService.initArticleGoodOrBadCount(articleId);
         }
         //执行lua点赞脚本
@@ -115,52 +127,55 @@ public class ArticleServiceImpl implements ArticleService {
                             log.error("Redis 清空失败，可能导致下次重复同步", e);
                             // 这里可以发送告警或记录到监控表
                         }
-                    }});
+                    }
+                });
         log.info("同步点赞/点踩数成功");
 
     }
+
     //拆分方法1
-    private void syncRedisToMysqlForGoodCount(){
-        Map<Integer,Integer> likeCountMap = rTmService.selectAllArticleGoodCount();
-        if(likeCountMap==null || likeCountMap.isEmpty()){
+    private void syncRedisToMysqlForGoodCount() {
+        Map<Integer, Integer> likeCountMap = rTmService.selectAllArticleGoodCount();
+        if (likeCountMap == null || likeCountMap.isEmpty()) {
             log.warn("没有检查到有文章变更点赞数?");
             return;
         }
-        log.info("获取到有记录的点赞集合:{}",likeCountMap);
-        try{
+        log.info("获取到有记录的点赞集合:{}", likeCountMap);
+        try {
             articleMapper.batchUpdateArticleGoodCount(mapToArticleUpdateDTOList(likeCountMap));
             log.info("同步点赞数成功");
-        }catch(Exception e){
-            log.error("同步点赞到mysql数失败:{}",e.getMessage());
+        } catch (Exception e) {
+            log.error("同步点赞到mysql数失败:{}", e.getMessage());
             throw new RuntimeException("同步点赞数到mysql失败");
         }
     }
+
     //拆分方法2
-    private void syncRedisToMysqlForBadCount(){
+    private void syncRedisToMysqlForBadCount() {
         //1 从redis获取数据
 
-        Map<Integer,Integer> badCountMap = rTmService.selectAllArticleBadCount();
-        if(badCountMap==null || badCountMap.isEmpty()){
+        Map<Integer, Integer> badCountMap = rTmService.selectAllArticleBadCount();
+        if (badCountMap == null || badCountMap.isEmpty()) {
             log.warn("没有检查到有文章变更点踩数?");
             return;
         }
-        log.info("获取到有记录的点踩集合:{}",badCountMap);
+        log.info("获取到有记录的点踩集合:{}", badCountMap);
         //2 操作mysql
-        try{
+        try {
             articleMapper.batchUpdateArticleBadCount(mapToArticleUpdateDTOList(badCountMap));
-        }catch(Exception e){
-            log.error("同步点踩数到mysql失败:{}",e.getMessage());
+        } catch (Exception e) {
+            log.error("同步点踩数到mysql失败:{}", e.getMessage());
             throw new RuntimeException("同步点踩数到mysql失败");
         }
     }
 
     //辅助方法Map<Integer,Integer>->List<ArticleUpdateDTO>
-    private List<ArticleUpdateDTO> mapToArticleUpdateDTOList(Map<Integer,Integer> map){
-        if(map==null){
+    private List<ArticleUpdateDTO> mapToArticleUpdateDTOList(Map<Integer, Integer> map) {
+        if (map == null) {
             return new ArrayList<>();
         }
         List<ArticleUpdateDTO> list = new ArrayList<>();
-        for(Map.Entry<Integer,Integer> entry:map.entrySet()){
+        for (Map.Entry<Integer, Integer> entry : map.entrySet()) {
             ArticleUpdateDTO dto = new ArticleUpdateDTO();
             dto.setArticleId(entry.getKey());
             dto.setCount(entry.getValue());
@@ -181,11 +196,11 @@ public class ArticleServiceImpl implements ArticleService {
 
     //同步redis的文章用户点赞关系到数据库
     @Override
-    public void syncRedisToMysqlForArticleGoodUser(){
+    public void syncRedisToMysqlForArticleGoodUser() {
         //1 从redis获取所有点赞用户关系数据 <articleId, List<userId>>
         Map<Long, List<Long>> goodUserRelationMap = rTmService.selectAllArticleGoodUserRelations();
-        
-        if(goodUserRelationMap == null || goodUserRelationMap.isEmpty()){
+
+        if (goodUserRelationMap == null || goodUserRelationMap.isEmpty()) {
             log.warn("没有检查到有文章点赞用户关系数据");
             return;
         }
@@ -198,11 +213,11 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
-    public void syncRedisToMysqlForArticleBadUser(){
+    public void syncRedisToMysqlForArticleBadUser() {
         //1 从redis获取所有点赞用户关系数据 <articleId, List<userId>>
         Map<Long, List<Long>> badUserRelationMap = rTmService.selectAllArticleBadUserRelations();
 
-        if(badUserRelationMap == null || badUserRelationMap.isEmpty()){
+        if (badUserRelationMap == null || badUserRelationMap.isEmpty()) {
             log.warn("没有检查到有文章点踩用户关系数据");
             return;
         }
@@ -212,6 +227,50 @@ public class ArticleServiceImpl implements ArticleService {
         //3 调用Mapper批量插入到数据库的点赞关系表
         articleMapper.batchInsertArticleUserInteract(articleUserInteractList);
         log.info("同步点踩用户关系到mysql成功");
+    }
+
+    @Transactional
+    @Override
+    public void deleteArticleById(Integer id) {
+        //1 权限校验
+        Long userId = BaseContext.getCurrentId();
+        User user = userService.selectUserById(userId);
+        Integer status = user.getStatus();
+        //1.1 管理员
+        if (status >= STATUS_ADMIN) {
+            log.info("管理员操作 跳过检查");
+        }
+        //1.2 用户
+        else{
+            log.info("用户操作 开始检查");
+            Article article = articleService.selectArticleById(id);
+            if(!article.getUserId().equals(userId)) {
+                log.error("用户id:{} 操作文章id:{} 失败，没有权限", userId, id);
+                throw new UserNotFoundException("没有权限哦...");
+            }
+        }
+        //2 删除文章 更新缓存
+        articleMapper.deleteArticleById(id);
+        articleRedisService.deleteArticleListInRedis();
+        articleRedisService.deleteArticleInRedis(id);
+        articleMapper.deleteArticleById(id);
+    }
+
+    @Override
+    public Article selectArticleById(Integer id) {
+        log.info("获取id:{}的文章",id);
+        Article articleInRedis = articleRedisService.selectArticleInRedis(id);
+        if (articleInRedis != null) {
+            return articleInRedis;
+        }
+        log.info("缓存未命中 尝试从数据库中读");
+        Article articleInMysql = articleMapper.selectArticleById(id);
+        if (articleInMysql != null) {
+            log.info("从数据库中读取到文章，存入缓存");
+            articleRedisService.insertArticleInRedis(articleInMysql);
+        }
+        log.error("文章不存在");
+        throw new UserNotFoundException("文章没找到哦...");
     }
 
 

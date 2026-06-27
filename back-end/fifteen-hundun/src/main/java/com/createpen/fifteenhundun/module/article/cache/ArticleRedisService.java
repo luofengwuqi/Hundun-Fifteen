@@ -1,5 +1,6 @@
 package com.createpen.fifteenhundun.module.article.cache;
 
+import com.createpen.fifteenhundun.common.util.RedisExpireTimeUtil;
 import com.createpen.fifteenhundun.module.article.mapper.ArticleMapper;
 import com.createpen.fifteenhundun.module.article.pojo.Entity.Article;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,34 @@ public class ArticleRedisService {
     /*
         文章整体相关
     */
+    //查单个文章
+    public Article selectArticleInRedis(Integer id){
+        try{
+            return (Article) redisTemplate.opsForValue().get(ARTICLE + id);
+        }catch (Exception e){
+            log.error("查询文章失败, articleId: {}", id, e);
+            throw new RuntimeException("查询文章失败...");
+        }
+    }
+    //塞单个文章
+    public void insertArticleInRedis(Article articleInMysql) {
+        try{
+            redisTemplate.opsForValue().set(ARTICLE + articleInMysql.getId(), articleInMysql, RedisExpireTimeUtil.getRandomTime(ARTICLE_EXPIRE), TimeUnit.MINUTES);
+        }catch (Exception e){
+            log.error("插入文章失败, articleId:{} ", articleInMysql.getId(), e);
+            throw new RuntimeException("插入文章失败...");
+        }
+    }
+    //删除单个文章
+    public void deleteArticleInRedis(Integer id) {
+        try{
+            redisTemplate.delete(ARTICLE + id);
+        }catch (Exception e){
+            log.error("删除文章失败, articleId: {}", id);
+            throw new RuntimeException("删除文章失败...");
+        }
+    }
+
     //在redis查询文章列表
     @SuppressWarnings("unchecked")
     public List<Article> selectArticleListInRedis() {
@@ -105,6 +134,10 @@ public class ArticleRedisService {
         }
 
     }
+
+
+
+
 
 /*
     下方的代码经过重构已经放置在lua脚本中

@@ -20,4 +20,8 @@ public interface ArticleService {
     void syncRedisToMysqlForArticleGoodUser();
 
     void syncRedisToMysqlForArticleBadUser();
+
+    void deleteArticleById(Integer id);
+
+    Article selectArticleById(Integer id);
 }

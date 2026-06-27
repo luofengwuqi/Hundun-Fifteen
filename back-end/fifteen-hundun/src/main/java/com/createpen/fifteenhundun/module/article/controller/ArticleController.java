@@ -19,6 +19,12 @@ public class ArticleController {
         this.articleService = articleService;
     }
 
+    @GetMapping("/{id}")
+    public Result<Article> selectArticleById(@PathVariable Integer id) {
+        log.info("selectArticleById: {}", id);
+        Article article = articleService.selectArticleById(id);
+        return Result.success(article);
+    }
     //查询所有文章
     @GetMapping
     public Result<List<Article>> selectArticleList() {
@@ -32,6 +38,14 @@ public class ArticleController {
         articleService.insertArticle(dto);
         return Result.success();
     }
+    //删除文章
+    @DeleteMapping("/{id}")
+    public Result<Void> deleteArticleById(@PathVariable Integer id) {
+        log.info("deleteArticle: {}", id);
+        articleService.deleteArticleById(id);
+        return Result.success();
+    }
+
     //修改文章点赞/点踩状态
     @PostMapping("/good/{id}")
     public Result<Void> updateArticleGood(@PathVariable Long id) {
@@ -54,4 +68,5 @@ public class ArticleController {
         articleService.syncRedisToMysqlForArticleBadUser();
         return Result.success();
     }
+
 }
