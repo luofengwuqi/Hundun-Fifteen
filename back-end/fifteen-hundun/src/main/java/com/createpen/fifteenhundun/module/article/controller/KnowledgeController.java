@@ -1,12 +1,12 @@
 package com.createpen.fifteenhundun.module.article.controller;
 
 import com.createpen.fifteenhundun.common.response.Result;
+import com.createpen.fifteenhundun.module.article.pojo.DTO.CollectionDTO;
 import com.createpen.fifteenhundun.module.article.pojo.Entity.Article;
 import com.createpen.fifteenhundun.module.article.service.KnowledgeService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.apache.ibatis.annotations.Delete;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -26,6 +26,12 @@ public class KnowledgeController {
         List<Article> list = knowledgeService.selectCollection();
         return Result.success(list);
     }
+    //取消收藏指定的文章
+    @DeleteMapping("/collection")
+    public Result<Void> deleteCollection(@RequestBody CollectionDTO dto){
+        knowledgeService.deleteCollection(dto);
+        return Result.success();
+    }
 
     //查询自己的文章
     @GetMapping("/own")
@@ -33,4 +39,5 @@ public class KnowledgeController {
         List<Article> list = knowledgeService.selectOwn();
         return Result.success(list);
     }
+
 }

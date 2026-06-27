@@ -2,6 +2,7 @@ package com.createpen.fifteenhundun.module.article.service.impl;
 
 import com.createpen.fifteenhundun.common.context.BaseContext;
 import com.createpen.fifteenhundun.module.article.mapper.KnowledgeMapper;
+import com.createpen.fifteenhundun.module.article.pojo.DTO.CollectionDTO;
 import com.createpen.fifteenhundun.module.article.pojo.Entity.Article;
 import com.createpen.fifteenhundun.module.article.service.KnowledgeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,5 +27,10 @@ public class KnowledgeServiceImpl implements KnowledgeService {
         Long userId = BaseContext.getCurrentId();
 
         return knowledgeMapper.selectOwn(userId);
+    }
+
+    @Override
+    public void deleteCollection(CollectionDTO id) {
+        //todo: 待实现
     }
 }

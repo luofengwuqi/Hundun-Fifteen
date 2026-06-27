@@ -28,4 +28,37 @@ export const syncRedisToMysqlAPI = () => {
   return request.post('/article/sync')
 }
 
+// 知识模块 - 获取自己的文章
+export const getOwnArticlesAPI = () => {
+  return request({
+    url: '/knowledge/own',
+    method: 'GET'
+  })
+}
+
+// 知识模块 - 获取收藏的文章
+export const getCollectionArticlesAPI = () => {
+  return request({
+    url: '/knowledge/collection',
+    method: 'GET'
+  })
+}
+
+// 知识模块 - 取消收藏
+export const deleteCollectionAPI = (articleId) => {
+  return request({
+    url: '/knowledge/collection',
+    method: 'DELETE',
+    data: { articleId }
+  })
+}
+
+// 删除文章
+export const deleteArticleAPI = (id) => {
+  return request({
+    url: `/article/${id}`,
+    method: 'DELETE'
+  })
+}
+
 
