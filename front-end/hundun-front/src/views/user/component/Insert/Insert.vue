@@ -45,7 +45,13 @@ const handleHideComponent = (componentName) => {
     selectedActions.value = [...newActions]
     hiddenComponents.value.clear()
   }
-  
+
+  if (componentName === 'ArticleCreate') {
+    const newActions = selectedActions.value.filter(action => action !== '今日芝士')
+    selectedActions.value = [...newActions]
+    hiddenComponents.value.clear()
+  }
+
   if (componentName === 'SleepHealth') {
     const newActions = selectedActions.value.filter(action => action !== '睡得咋样')
     selectedActions.value = [...newActions]

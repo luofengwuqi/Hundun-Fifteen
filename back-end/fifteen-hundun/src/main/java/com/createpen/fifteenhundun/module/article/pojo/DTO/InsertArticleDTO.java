@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 public class InsertArticleDTO {
     private String title;
     private String text;
+    private Integer status;
     private String creator;
     private Integer belonging;
 }

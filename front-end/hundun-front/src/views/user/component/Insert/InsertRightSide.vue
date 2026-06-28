@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useUserStore } from '@/stores/user'
 import DiaryInput from './form/DiaryInput.vue'
+import ArticleCreate from './form/ArticleCreate.vue'
 import WhatAteToday from './form/WhatAteToday.vue'
 import MealCost from './form/MealCost.vue'
 import FeatureDisabled from './form/FeatureDisabled.vue'
@@ -187,6 +188,10 @@ const componentsToShow = computed(() => {
   return components
 })
 
+const showArticleCreate = computed(
+  () => props.selectedActions.includes('今日芝士') && !hiddenComponents.value.has('ArticleCreate')
+)
+
 const hasPendingSelection = computed(
   () => props.selectedActions.length > 0 && componentsToShow.value.length === 0
 )
@@ -223,7 +228,7 @@ const onPanelAfterLeave = (el) => {
 
 <template>
   <div class="right-side-container">
-    <div class="workspace-title" v-if="!diaryMode">
+    <div class="workspace-title" v-if="!diaryMode && !showArticleCreate">
       <h2>工作台</h2>
     </div>
 
@@ -232,6 +237,13 @@ const onPanelAfterLeave = (el) => {
       v-if="diaryMode"
       class="diary-input-full"
       @back="$emit('update:diaryMode', false)"
+    />
+
+    <!-- 知识创作模式 -->
+    <ArticleCreate
+      v-else-if="showArticleCreate"
+      class="article-create-full"
+      @hide="emit('hide-component', 'ArticleCreate')"
     />
 
     <Transition v-else name="empty-fade" mode="out-in">
@@ -285,7 +297,8 @@ const onPanelAfterLeave = (el) => {
   overflow: hidden;
 }
 
-.diary-input-full {
+.diary-input-full,
+.article-create-full {
   flex: 1;
   min-height: 0;
   width: 100%;

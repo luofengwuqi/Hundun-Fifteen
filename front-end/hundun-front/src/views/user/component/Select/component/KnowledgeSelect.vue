@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user.js'
 import {
   getOwnArticlesAPI,
@@ -12,7 +13,12 @@ import {
 import FunctionDisabled from './FunctionDisabled.vue'
 
 const userStore = useUserStore()
+const router = useRouter()
 const enabled = computed(() => userStore.userModelStatus?.knowledge === 1)
+
+const goDetail = (id) => {
+  router.push(`/user/article/detail/${id}`)
+}
 
 const activeTab = ref('all')
 const sortBy = ref('newest')
@@ -222,7 +228,9 @@ watch(activeTab, () => {
               v-for="(article, idx) in displayArticles"
               :key="article.id"
               class="article-card"
+              :class="{ clickable: article.id }"
               :style="{ '--i': idx }"
+              @click="goDetail(article.id)"
             >
               <div class="card-accent"></div>
               <div class="card-body">
@@ -240,7 +248,7 @@ watch(activeTab, () => {
                   <button
                     class="action-btn vote-btn"
                     :class="{ liked: voteStatus[article.id] === 'good' }"
-                    @click="handleToggleGood(article.id)"
+                    @click.stop="handleToggleGood(article.id)"
                   >
                     <span class="vote-icon">👍</span>
                     <span class="vote-count">{{ article.good || 0 }}</span>
@@ -248,7 +256,7 @@ watch(activeTab, () => {
                   <button
                     class="action-btn vote-btn"
                     :class="{ disliked: voteStatus[article.id] === 'bad' }"
-                    @click="handleToggleBad(article.id)"
+                    @click.stop="handleToggleBad(article.id)"
                   >
                     <span class="vote-icon">👎</span>
                     <span class="vote-count">{{ article.bad || 0 }}</span>
@@ -258,7 +266,7 @@ watch(activeTab, () => {
                   <button
                     v-if="activeTab === 'own' || isOwn(article)"
                     class="action-btn delete-btn"
-                    @click="handleDelete(article.id)"
+                    @click.stop="handleDelete(article.id)"
                   >
                     <span>🗑️</span>
                     <span>删除</span>
@@ -266,7 +274,7 @@ watch(activeTab, () => {
                   <button
                     v-if="activeTab === 'collected'"
                     class="action-btn unfav-btn"
-                    @click="handleUnfavorite(article.id)"
+                    @click.stop="handleUnfavorite(article.id)"
                   >
                     <span>💔</span>
                     <span>取消收藏</span>
@@ -646,6 +654,10 @@ watch(activeTab, () => {
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 1px 4px @shadow;
+
+  &.clickable {
+    cursor: pointer;
+  }
 
   &:hover {
     border-color: @gold-light;

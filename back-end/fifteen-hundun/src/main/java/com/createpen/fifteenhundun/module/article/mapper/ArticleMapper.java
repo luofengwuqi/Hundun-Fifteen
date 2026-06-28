@@ -12,7 +12,7 @@ public interface ArticleMapper {
     @Select("select * from article")
     List<Article> selectArticleList();
 
-    @Insert("INSERT INTO article (title, text, creator, belonging , created_at,user_id) VALUES (#{title}, #{text}, #{creator}, #{belonging},#{createdAt},#{userId})")
+    @Insert("INSERT INTO article (title, text, creator, belonging , created_at,user_id,status) VALUES (#{title}, #{text}, #{creator}, #{belonging},#{createdAt},#{userId},#{status})")
     void insertArticle(Article article);
 
     @Select("select * from article where id = #{id}")

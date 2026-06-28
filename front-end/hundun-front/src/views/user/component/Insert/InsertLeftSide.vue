@@ -49,6 +49,8 @@ const quickActions = [
   { label: '睡得咋样', icon: '😴' },
   { label: '心情如何', icon: '💭' },
 
+  { label: '今日芝士', icon: '🧀' },
+
   { label: '整点计划', icon: '📝' },
   { label: '重要备忘', icon: '📌' }
 ]
@@ -91,7 +93,10 @@ const handleQuickAction = (action) => {
         v-for="action in quickActions"
         :key="action.label"
         class="action-button"
-        :class="{ 'is-selected': selectedActions.includes(action.label) }"
+        :class="{
+          'is-selected': selectedActions.includes(action.label),
+          'is-cheese': action.label === '今日芝士'
+        }"
         @click="handleQuickAction(action)"
       >
         <span class="action-icon">{{ action.icon }}</span>
@@ -243,6 +248,43 @@ const handleQuickAction = (action) => {
 
     .action-icon {
       transform: scale(1.1);
+    }
+  }
+
+  // 芝士按钮 — 暖金色调，与快捷记录区分
+  &.is-cheese {
+    background: linear-gradient(135deg, #FFF8E8 0%, #FFF3D6 100%);
+    border-color: #E8C44A;
+
+    &::before {
+      background: linear-gradient(135deg, rgba(212, 160, 23, 0.08) 0%, rgba(232, 196, 74, 0.08) 100%);
+    }
+
+    .action-icon {
+      filter: drop-shadow(0 1px 3px rgba(212, 160, 23, 0.3));
+    }
+
+    &:hover {
+      border-color: #D4A017;
+      box-shadow: 0 4px 16px rgba(212, 160, 23, 0.2);
+
+      .action-icon {
+        transform: scale(1.15) rotate(5deg);
+      }
+    }
+
+    &.is-selected {
+      background: linear-gradient(135deg, #D4A017 0%, #E8C44A 100%);
+      border-color: #D4A017;
+      box-shadow: 0 4px 16px rgba(212, 160, 23, 0.35);
+
+      .action-label {
+        color: #FFFFFF;
+      }
+
+      .action-icon {
+        filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.2));
+      }
     }
   }
 }

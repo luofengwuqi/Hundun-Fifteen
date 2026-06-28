@@ -7,13 +7,17 @@ export const getArticleListAPI = () => {
     method: 'GET'
   })
 }
-export const submitHelpArticle =(title,text,creator)=>{
-  return request.post('/article',{
+export const submitHelpArticle = (title, text, creator) => {
+  return request.post('/article', {
     title,
     text,
     creator,
     belonging: 1
   })
+}
+
+export const submitArticleAPI = (data) => {
+  return request.post('/article', data)
 }
 
 export const updateArticleGoodAPI = (id) => {
