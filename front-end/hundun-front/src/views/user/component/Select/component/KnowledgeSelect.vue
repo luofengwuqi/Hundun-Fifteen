@@ -3,7 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user.js'
 import {
-  getOwnArticlesAPI,
+  getOwnArticlesPageAPI,
   getCollectionArticlesAPI,
   deleteArticleAPI,
   deleteCollectionAPI,
@@ -28,6 +28,11 @@ const error = ref('')
 const ownArticles = ref([])
 const collectedArticles = ref([])
 
+const currentPage = ref(1)
+const totalPages = ref(0)
+const total = ref(0)
+const pageSize = ref(10)
+
 const searchKeyword = ref('')
 
 const loadData = async () => {
@@ -35,11 +40,16 @@ const loadData = async () => {
   error.value = ''
   try {
     if (activeTab.value === 'own') {
-      const res = await getOwnArticlesAPI()
-      ownArticles.value = res.data || []
+      const res = await getOwnArticlesPageAPI(currentPage.value, pageSize.value)
+      const pageInfo = res.data
+      ownArticles.value = pageInfo.list || []
+      totalPages.value = pageInfo.pages || 0
+      total.value = pageInfo.total || 0
     } else if (activeTab.value === 'collected') {
       const res = await getCollectionArticlesAPI()
       collectedArticles.value = res.data || []
+      totalPages.value = 0
+      total.value = collectedArticles.value.length
     }
   } catch (err) {
     console.error('Failed to load articles:', err)
@@ -48,6 +58,15 @@ const loadData = async () => {
     loading.value = false
   }
 }
+
+const goToPage = (page) => {
+  if (page < 1 || page > totalPages.value) return
+  currentPage.value = page
+  loadData()
+}
+
+const prevPage = () => goToPage(currentPage.value - 1)
+const nextPage = () => goToPage(currentPage.value + 1)
 
 const handleDelete = async (id) => {
   try {
@@ -138,7 +157,7 @@ const displayArticles = computed(() => {
 })
 
 const stats = computed(() => ({
-  own: ownArticles.value.length,
+  own: total.value,
   collected: collectedArticles.value.length
 }))
 
@@ -165,6 +184,7 @@ onMounted(() => {
 })
 
 watch(activeTab, () => {
+  currentPage.value = 1
   loadData()
 })
 </script>
@@ -295,6 +315,30 @@ watch(activeTab, () => {
 
           <div v-else-if="displayArticles.length === 0" class="state-box">
             <p class="state-text state-empty">📭 此处尚无文章</p>
+          </div>
+
+          <div v-if="activeTab === 'own' && totalPages > 0" class="pagination-bar">
+            <button
+              class="page-btn"
+              :disabled="currentPage <= 1"
+              @click="prevPage"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+              上一页
+            </button>
+            <span class="page-info">
+              <span class="page-current">{{ currentPage }}</span>
+              <span class="page-sep">/</span>
+              <span class="page-total">{{ totalPages }}</span>
+            </span>
+            <button
+              class="page-btn"
+              :disabled="currentPage >= totalPages"
+              @click="nextPage"
+            >
+              下一页
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
           </div>
         </div>
       </div>
@@ -1012,6 +1056,66 @@ watch(activeTab, () => {
   color: var(--text-muted);
   letter-spacing: 2px;
   font-style: italic;
+}
+
+/* Pagination bar */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 20px 0 8px;
+  flex-shrink: 0;
+}
+
+.page-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 16px;
+  border: 1px solid @border;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text-body);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+
+  &:hover:not(:disabled) {
+    border-color: @red;
+    color: @red;
+    background: fade(@red, 4%);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+}
+
+.page-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.page-sep {
+  color: @border;
+  font-weight: 400;
+}
+
+.page-total {
+  color: var(--text-muted);
+  font-weight: 400;
 }
 
 /* TransitionGroup animations */

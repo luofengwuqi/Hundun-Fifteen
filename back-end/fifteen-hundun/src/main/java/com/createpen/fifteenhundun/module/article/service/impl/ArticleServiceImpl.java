@@ -266,11 +266,12 @@ public class ArticleServiceImpl implements ArticleService {
         log.info("缓存未命中 尝试从数据库中读");
         Article articleInMysql = articleMapper.selectArticleById(id);
         if (articleInMysql != null) {
-            log.info("从数据库中读取到文章，存入缓存");
-            articleRedisService.insertArticleInRedis(articleInMysql);
-        }
-        log.error("文章不存在");
-        throw new UserNotFoundException("文章没找到哦...");
+        log.info("从数据库中读取到文章，存入缓存");
+        articleRedisService.insertArticleInRedis(articleInMysql);
+        return articleInMysql;
+    }
+    log.error("文章不存在");
+    throw new UserNotFoundException("文章没找到哦...");
     }
 
 

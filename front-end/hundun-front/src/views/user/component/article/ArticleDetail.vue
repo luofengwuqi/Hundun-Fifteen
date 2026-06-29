@@ -1,44 +1,64 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useArticleStore } from '@/stores/article'
+import { getArticleByIdAPI, updateArticleGoodAPI, updateArticleBadAPI } from '@/api/article'
 import { marked } from 'marked'
 
 marked.setOptions({ breaks: true, gfm: true })
 
 const route = useRoute()
 const router = useRouter()
-const articleStore = useArticleStore()
 
-const article = computed(() =>
-  articleStore.articleList.find(a => a.id === Number(route.params.id)) || null
-)
-
-const loading = ref(false)
+const article = ref(null)
+const loading = ref(true)
 const notFound = ref(false)
+const voteStatus = ref(null)
 
-watch(() => route.params.id, async () => {
-  const id = Number(route.params.id)
-  let found = articleStore.articleList.find(a => a.id === id)
-  if (!found) {
-    loading.value = true
-    await articleStore.getArticleList()
-    found = articleStore.articleList.find(a => a.id === id)
+const fetchArticle = async (id) => {
+  loading.value = true
+  notFound.value = false
+  try {
+    const res = await getArticleByIdAPI(id)
+    article.value = res.data
+    voteStatus.value = null
+  } catch {
+    article.value = null
+    notFound.value = true
+  } finally {
     loading.value = false
   }
-  notFound.value = !found
-}, { immediate: true })
+}
 
-const voteStatus = computed(() => articleStore.getVoteStatus(article.value?.id))
+watch(() => route.params.id, (id) => {
+  if (id) fetchArticle(Number(id))
+}, { immediate: true })
 
 const handleGood = async () => {
   if (!article.value) return
-  await articleStore.toggleGood(article.value.id)
+  const prev = voteStatus.value
+  await updateArticleGoodAPI(article.value.id)
+  if (prev === 'good') {
+    article.value.good = Math.max(0, (article.value.good || 0) - 1)
+    voteStatus.value = null
+  } else {
+    if (prev === 'bad') article.value.bad = Math.max(0, (article.value.bad || 0) - 1)
+    article.value.good = (article.value.good || 0) + 1
+    voteStatus.value = 'good'
+  }
 }
 
 const handleBad = async () => {
   if (!article.value) return
-  await articleStore.toggleBad(article.value.id)
+  const prev = voteStatus.value
+  await updateArticleBadAPI(article.value.id)
+  if (prev === 'bad') {
+    article.value.bad = Math.max(0, (article.value.bad || 0) - 1)
+    voteStatus.value = null
+  } else {
+    if (prev === 'good') article.value.good = Math.max(0, (article.value.good || 0) - 1)
+    article.value.bad = (article.value.bad || 0) + 1
+    voteStatus.value = 'bad'
+  }
 }
 
 const renderedContent = computed(() => {
@@ -58,7 +78,7 @@ const formatDate = (dateStr) => {
 }
 
 const belongingLabel = computed(() => {
-  const map = { 1: '帮助文档' }
+  const map = { 1: '帮助文档', 2: '知识分享' }
   return map[article.value?.belonging] || null
 })
 

@@ -7,6 +7,14 @@ export const getArticleListAPI = () => {
     method: 'GET'
   })
 }
+
+// 获取单篇文章
+export const getArticleByIdAPI = (id) => {
+  return request({
+    url: `/article/${id}`,
+    method: 'GET'
+  })
+}
 export const submitHelpArticle = (title, text, creator) => {
   return request.post('/article', {
     title,
@@ -37,6 +45,15 @@ export const getOwnArticlesAPI = () => {
   return request({
     url: '/knowledge/own',
     method: 'GET'
+  })
+}
+
+// 知识模块 - 分页获取自己的文章
+export const getOwnArticlesPageAPI = (page, pageSize) => {
+  return request({
+    url: '/knowledge/own/page',
+    method: 'GET',
+    params: { page, pageSize }
   })
 }
 

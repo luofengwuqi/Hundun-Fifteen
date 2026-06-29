@@ -4,8 +4,8 @@ import com.createpen.fifteenhundun.common.response.Result;
 import com.createpen.fifteenhundun.module.article.pojo.DTO.CollectionDTO;
 import com.createpen.fifteenhundun.module.article.pojo.Entity.Article;
 import com.createpen.fifteenhundun.module.article.service.KnowledgeService;
+import com.github.pagehelper.PageInfo;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.annotations.Delete;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,6 +38,15 @@ public class KnowledgeController {
     public Result<List<Article>> selectOwn(){
         List<Article> list = knowledgeService.selectOwn();
         return Result.success(list);
+    }
+
+    //分页查询自己的文章
+    @GetMapping("/own/page")
+    public Result<PageInfo<Article>> selectOwnPage(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        PageInfo<Article> pageInfo = knowledgeService.selectOwnPage(page, pageSize);
+        return Result.success(pageInfo);
     }
 
 }
