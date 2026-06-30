@@ -3,7 +3,9 @@ package com.createpen.fifteenhundun.module.article.controller;
 import com.createpen.fifteenhundun.common.response.Result;
 import com.createpen.fifteenhundun.module.article.pojo.DTO.InsertArticleDTO;
 import com.createpen.fifteenhundun.module.article.pojo.Entity.Article;
+import com.createpen.fifteenhundun.module.article.pojo.VO.BelongingVO;
 import com.createpen.fifteenhundun.module.article.service.ArticleService;
+import com.github.pagehelper.PageInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +21,15 @@ public class ArticleController {
         this.articleService = articleService;
     }
 
+    @GetMapping("/categories")
+    public Result<List<BelongingVO>> getCategories() {
+        List<BelongingVO> categories = List.of(
+            new BelongingVO(1, "帮助文档"),
+            new BelongingVO(2, "知识分享")
+        );
+        return Result.success(categories);
+    }
+
     @GetMapping("/{id}")
     public Result<Article> selectArticleById(@PathVariable Integer id) {
         log.info("selectArticleById: {}", id);
@@ -27,9 +38,9 @@ public class ArticleController {
     }
     //查询所有已经开放的文章
     @GetMapping
-    public Result<List<Article>> selectArticleList(@RequestParam Integer page) {
-        List<Article> list = articleService.selectArticleList(page);
-        return Result.success(list);
+    public Result<PageInfo<Article>> selectArticleList(@RequestParam Integer page, @RequestParam(defaultValue = "10") Integer pageSize, @RequestParam(required = false) Integer belonging, @RequestParam(required = false) Integer articleStatus) {
+        PageInfo<Article> pageInfo = articleService.selectArticleList(page, pageSize, belonging, articleStatus);
+        return Result.success(pageInfo);
     }
     //上传文章
     @PostMapping
@@ -38,6 +49,13 @@ public class ArticleController {
         articleService.insertArticle(dto);
         return Result.success();
     }
+    @PutMapping("/{id}/status")
+    public Result<Void> updateArticleStatus(@PathVariable Integer id, @RequestParam Integer status) {
+        log.info("updateArticleStatus: id={}, status={}", id, status);
+        articleService.updateArticleStatus(id, status);
+        return Result.success();
+    }
+
     //删除文章
     @DeleteMapping("/{id}")
     public Result<Void> deleteArticleById(@PathVariable Integer id) {

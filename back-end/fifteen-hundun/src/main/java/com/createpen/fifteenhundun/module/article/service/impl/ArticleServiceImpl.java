@@ -12,6 +12,8 @@ import com.createpen.fifteenhundun.module.article.pojo.Entity.ArticleUserInterac
 import com.createpen.fifteenhundun.module.article.service.ArticleService;
 import com.createpen.fifteenhundun.module.user.pojo.Entity.User;
 import com.createpen.fifteenhundun.module.user.service.UserService;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
@@ -52,20 +54,13 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
-    public List<Article> selectArticleList(Integer page) {
-        List<Article> listInRedis = articleRedisService.selectArticleListInRedis();
-        if (listInRedis != null) {
-            //查到了 直接返回
-            log.info("命中缓存");
-            return listInRedis;
-        }
-        //没查到 在数据库里查 查完放redis里 然后返回
-        log.info("未命中缓存");
-        Integer status = getStatus();//status代表检验是否是管理员用户
-        Integer skip = (page - 1) * 10;
-        List<Article> list = articleMapper.selectArticleList(status, skip);
-        articleRedisService.insertArticleListInRedis(list,page);
-        return list;
+    public PageInfo<Article> selectArticleList(Integer page, Integer pageSize, Integer belonging, Integer articleStatus) {
+        Integer userStatus = getStatus();
+        // 非管理员不能按文章状态筛选
+        Integer effectiveArticleStatus = (userStatus >= STATUS_ADMIN) ? articleStatus : null;
+        PageHelper.startPage(page, pageSize);
+        List<Article> list = articleMapper.selectArticleList(userStatus, belonging, effectiveArticleStatus);
+        return new PageInfo<>(list);
     }
 
     @Override
@@ -75,8 +70,6 @@ public class ArticleServiceImpl implements ArticleService {
         article.setCreatedAt(LocalDateTime.now());
         article.setUserId(BaseContext.getCurrentId());
         articleMapper.insertArticle(article);
-        //插入完文章后 删除redis里的文章列表
-        articleRedisService.deleteArticleListInRedis();
     }
 
     /*
@@ -256,11 +249,20 @@ public class ArticleServiceImpl implements ArticleService {
                 throw new UserNotFoundException("没有权限哦...");
             }
         }
-        //2 删除文章 更新缓存
         articleMapper.deleteArticleById(id);
-        articleRedisService.deleteArticleListInRedis();
         articleRedisService.deleteArticleInRedis(id);
-        articleMapper.deleteArticleById(id);
+    }
+
+    @Override
+    public void updateArticleStatus(Integer id, Integer status) {
+        Integer userStatus = getStatus();
+        if (userStatus < STATUS_ADMIN) {
+            log.error("非管理员用户尝试修改文章状态, userId: {}", BaseContext.getCurrentId());
+            throw new UserNotFoundException("没有权限哦...");
+        }
+        articleMapper.updateArticleStatus(id, status);
+        articleRedisService.deleteArticleInRedis(id);
+        log.info("文章 {} 状态已更新为 {}", id, status);
     }
 
     @Override

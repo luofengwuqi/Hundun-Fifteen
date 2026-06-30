@@ -1,13 +1,17 @@
 import request from '@/utils/request'
 
 // 获取文章列表
-export const getArticleListAPI = (page) => {
+export const getArticleListAPI = (page, pageSize = 10, belonging = null, articleStatus = null) => {
 
-  return request.get('/article', {
-    params:{
-       page: page
-    }
-  })
+  const params = { page, pageSize }
+  if (belonging !== null) params.belonging = belonging
+  if (articleStatus !== null) params.articleStatus = articleStatus
+  return request.get('/article', { params })
+}
+
+// 获取文章分类
+export const getArticleCategoriesAPI = () => {
+  return request.get('/article/categories')
 }
 
 // 获取单篇文章
@@ -74,6 +78,11 @@ export const deleteCollectionAPI = (articleId) => {
     method: 'DELETE',
     data: { articleId }
   })
+}
+
+// 更新文章状态
+export const updateArticleStatusAPI = (id, status) => {
+  return request.put(`/article/${id}/status`, null, { params: { status } })
 }
 
 // 删除文章

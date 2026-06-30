@@ -4,12 +4,17 @@ import { getArticleListAPI, updateArticleGoodAPI, updateArticleBadAPI } from '@/
 
 export const useArticleStore = defineStore('article', () => {
   const articleList = ref([])
+  const total = ref(0)
+  const totalPages = ref(0)
 
   const currentVoteStatus = ref({})
 
-  const getArticleList = async (page) => {
-    const res = await getArticleListAPI(page)
-    articleList.value = res.data
+  const getArticleList = async (page = 1, pageSize = 10, belonging = null, articleStatus = null) => {
+    const res = await getArticleListAPI(page, pageSize, belonging, articleStatus)
+    const pageInfo = res.data
+    articleList.value = pageInfo.list || []
+    total.value = pageInfo.total || 0
+    totalPages.value = pageInfo.pages || 0
     return res
   }
 
@@ -52,7 +57,7 @@ export const useArticleStore = defineStore('article', () => {
   }
 
   return {
-    articleList, currentVoteStatus,
+    articleList, total, totalPages, currentVoteStatus,
     getArticleList, setVoteStatus, getVoteStatus,
     toggleGood, toggleBad
   }

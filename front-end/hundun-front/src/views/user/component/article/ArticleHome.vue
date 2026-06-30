@@ -1,44 +1,66 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useArticleStore } from '@/stores/article'
+import { getArticleCategoriesAPI } from '@/api/article'
+import { useUserStore } from '@/stores/user'
 import ArticleCard from './ArticleCard.vue'
 
-const getType = (index)=>{
-  return typeArr[index]
-}
-const typeArr = ["null","帮助文档","知识分享"]
-
 const articleStore = useArticleStore()
+const userStore = useUserStore()
+
+const isAdmin = computed(() => (userStore.userInfo?.status || 0) >= 2)
 
 const loading = ref(true)
+const categories = ref([])
 
 const searchText = ref('')
 const sortKey = ref('newest')
 const belongingFilter = ref(null)
+const statusFilter = ref(null)
 
-const page = ref(1)
+const statusOptions = [
+  { value: 0, label: '禁用' },
+  { value: 1, label: '待审核' },
+  { value: 2, label: '私密' },
+  { value: 3, label: '公开' }
+]
+
+const currentPage = ref(1)
+const pageSize = ref(10)
+
+const loadArticles = async () => {
+  loading.value = true
+  await articleStore.getArticleList(currentPage.value, pageSize.value, belongingFilter.value, statusFilter.value)
+  loading.value = false
+}
+
+const loadCategories = async () => {
+  try {
+    const res = await getArticleCategoriesAPI()
+    categories.value = res.data || []
+  } catch {
+    categories.value = []
+  }
+}
 
 onMounted(async () => {
-  loading.value = true
-  await articleStore.getArticleList(page.value)
-  loading.value = false
+  await Promise.all([loadArticles(), loadCategories()])
 })
 
-const totalArticles = computed(() => articleStore.articleList.length)
+watch(currentPage, loadArticles)
+
+watch([belongingFilter, statusFilter], () => {
+  currentPage.value = 1
+  loadArticles()
+})
+
+const totalArticles = computed(() => articleStore.total)
 const totalGood = computed(() =>
   articleStore.articleList.reduce((s, a) => s + (a.good || 0), 0)
 )
 
-const belongingOptions = computed(() => {
-  const set = new Set(articleStore.articleList.map(a => a.belonging).filter(Boolean))
-  return [...set].sort()
-})
-
 const filteredArticles = computed(() => {
   let list = articleStore.articleList
-  if (belongingFilter.value !== null) {
-    list = list.filter(a => a.belonging === belongingFilter.value)
-  }
   if (searchText.value.trim()) {
     const q = searchText.value.trim().toLowerCase()
     list = list.filter(a => (a.title || '').toLowerCase().includes(q))
@@ -51,6 +73,14 @@ const filteredArticles = computed(() => {
   }
   return sorted
 })
+
+const goToPage = (page) => {
+  if (page < 1 || page > articleStore.totalPages || page === currentPage.value) return
+  currentPage.value = page
+}
+
+const prevPage = () => goToPage(currentPage.value - 1)
+const nextPage = () => goToPage(currentPage.value + 1)
 </script>
 
 <template>
@@ -108,13 +138,32 @@ const filteredArticles = computed(() => {
                 @click="belongingFilter = null"
               >全部</button>
               <button
-                v-for="b in belongingOptions"
-                :key="b"
+                v-for="cat in categories"
+                :key="cat.value"
                 class="sort-tab"
-                :class="{ active: belongingFilter === b }"
-                @click="belongingFilter = b"
+                :class="{ active: belongingFilter === cat.value }"
+                @click="belongingFilter = cat.value"
               >
-                {{ getType(b) }}
+                {{ cat.label }}
+              </button>
+            </div>
+          </div>
+          <div v-if="isAdmin" class="filter-group">
+            <span class="filter-label">状态</span>
+            <div class="sort-tabs">
+              <button
+                class="sort-tab"
+                :class="{ active: statusFilter === null }"
+                @click="statusFilter = null"
+              >全部</button>
+              <button
+                v-for="opt in statusOptions"
+                :key="opt.value"
+                class="sort-tab"
+                :class="{ active: statusFilter === opt.value }"
+                @click="statusFilter = opt.value"
+              >
+                {{ opt.label }}
               </button>
             </div>
           </div>
@@ -151,6 +200,30 @@ const filteredArticles = computed(() => {
           :key="article.id"
           :article="article"
         />
+      </div>
+
+      <div v-if="articleStore.totalPages > 0" class="pagination-bar">
+        <button
+          class="page-btn"
+          :disabled="currentPage <= 1"
+          @click="prevPage"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          上一页
+        </button>
+        <span class="page-info">
+          <span class="page-current">{{ currentPage }}</span>
+          <span class="page-sep">/</span>
+          <span class="page-total">{{ articleStore.totalPages }}</span>
+        </span>
+        <button
+          class="page-btn"
+          :disabled="currentPage >= articleStore.totalPages"
+          @click="nextPage"
+        >
+          下一页
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
       </div>
     </main>
   </div>
@@ -392,5 +465,65 @@ const filteredArticles = computed(() => {
 
 @keyframes spin {
   to { transform: rotate(360deg) }
+}
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px 0 8px;
+  width: 50%;
+  margin: 0 auto;
+}
+
+.page-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 16px;
+  border: 1px solid #ede6d8;
+  border-radius: 8px;
+  background: #fffcf5;
+  color: #5a4a42;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+
+  &:hover:not(:disabled) {
+    border-color: #c3272b;
+    color: #c3272b;
+    background: rgba(195, 39, 43, 0.04);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+}
+
+.page-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #5a4a42;
+  font-variant-numeric: tabular-nums;
+}
+
+.page-sep {
+  color: #ede6d8;
+  font-weight: 400;
+}
+
+.page-total {
+  color: #999;
+  font-weight: 400;
 }
 </style>

@@ -2,11 +2,10 @@ package com.createpen.fifteenhundun.module.article.service;
 
 import com.createpen.fifteenhundun.module.article.pojo.DTO.InsertArticleDTO;
 import com.createpen.fifteenhundun.module.article.pojo.Entity.Article;
-
-import java.util.List;
+import com.github.pagehelper.PageInfo;
 
 public interface ArticleService {
-    List<Article> selectArticleList(Integer Page);
+    PageInfo<Article> selectArticleList(Integer page, Integer pageSize, Integer belonging, Integer articleStatus);
 
     void insertArticle(InsertArticleDTO dto);
 
@@ -22,6 +21,8 @@ public interface ArticleService {
     void syncRedisToMysqlForArticleBadUser();
 
     void deleteArticleById(Integer id);
+
+    void updateArticleStatus(Integer id, Integer status);
 
     Article selectArticleById(Integer id);
 }

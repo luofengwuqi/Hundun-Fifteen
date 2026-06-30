@@ -7,9 +7,13 @@ import { logout } from '@/utils/login/logout.js'
 const emit = defineEmits(['changeMenu']);
 
 const activeIndex = ref(0);
-const menuItems = ref(['用户管理', '邀请管理','处理反馈','撰写帮助','操作面板','音乐管理','敬请期待']);
+const menuItems = ref(['用户管理', '邀请管理','处理反馈','撰写帮助','操作面板','音乐管理','社区管理','敬请期待']);
 
 const handleChoose = (index) => {
+  if (index === 6) {
+    window.location.href = '/user/article'
+    return
+  }
   activeIndex.value = index;
   emit('changeMenu', index);
 }

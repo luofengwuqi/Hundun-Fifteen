@@ -1,0 +1,23 @@
+请在充分了解D:\develop\code\hundun-bone\15-hundun\front-end\hundun-front\src\views\user\component\Insert的架构之后 以及颜色使用风格之后 进行如下的任务:
+
+1. 在Leftside里加一个 今日芝士 (知识 括号里的内容不要在前端展示 仅作提醒)
+2. 当"今日芝士"被点击时候在右侧工作区展示新的组件(注意不是form 而是一个与RightSide平级的完整的组件) 这个组件支持用户上传文章
+
+后端接口D:\develop\code\hundun-bone\15-hundun\back-end\fifteen-hundun\src\main\java\com\createpen\fifteenhundun\module\article\controller\ArticleController.java 请关注   
+ //上传文章
+    @PostMapping
+    public Result<Void> insertArticle(@RequestBody InsertArticleDTO dto) {
+        log.info("insertArticle: {}", dto);
+        articleService.insertArticle(dto);
+        return Result.success();
+    }
+
+这个新的组件支持的表单项:
+1 标题
+2 创建者(默认从userStore里拿到nickname 拿不到就拿username 允许自己修改)
+3 所属模块(1帮助文档 2知识分享)
+4 是否公开(1公开 2私密)
+5 正文(占用控件最大)
+
+现在提出新的要求:标题和创建者占一行 标题占2/3 创建者占到1/3
+所属模块以后可能会拓展更多的选项

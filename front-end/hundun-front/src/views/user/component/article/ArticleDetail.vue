@@ -1,18 +1,47 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getArticleByIdAPI, updateArticleGoodAPI, updateArticleBadAPI } from '@/api/article'
+import { getArticleByIdAPI, updateArticleGoodAPI, updateArticleBadAPI, updateArticleStatusAPI } from '@/api/article'
+import { useUserStore } from '@/stores/user'
 import { marked } from 'marked'
+import { ElMessage } from 'element-plus'
 
 marked.setOptions({ breaks: true, gfm: true })
 
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
+
+const isAdmin = computed(() => (userStore.userInfo?.status || 0) >= 2)
 
 const article = ref(null)
 const loading = ref(true)
 const notFound = ref(false)
 const voteStatus = ref(null)
+const updatingStatus = ref(false)
+
+const statusOptions = [
+  { value: 0, label: '禁用' },
+  { value: 1, label: '待审核' },
+  { value: 2, label: '私密' },
+  { value: 3, label: '公开' }
+]
+
+const articleStatusValue = computed(() => article.value?.status ?? null)
+
+const handleStatusChange = async (newStatus) => {
+  if (!article.value || newStatus === article.value.status) return
+  updatingStatus.value = true
+  try {
+    await updateArticleStatusAPI(article.value.id, newStatus)
+    article.value.status = newStatus
+    ElMessage.success(`文章状态已更新为「${statusOptions.find(o => o.value === newStatus)?.label}」`)
+  } catch {
+    ElMessage.error('更新状态失败')
+  } finally {
+    updatingStatus.value = false
+  }
+}
 
 const fetchArticle = async (id) => {
   loading.value = true
@@ -108,6 +137,24 @@ const goBack = () => {
           </svg>
           返回社区
         </button>
+      </div>
+
+      <div v-if="isAdmin && article" class="status-card">
+        <div class="status-card-body">
+          <span class="status-card-label">文章状态</span>
+          <div class="status-btn-group">
+            <button
+              v-for="opt in statusOptions"
+              :key="opt.value"
+              class="status-btn"
+              :class="{ active: articleStatusValue === opt.value }"
+              :disabled="updatingStatus"
+              @click="handleStatusChange(opt.value)"
+            >
+              {{ opt.label }}
+            </button>
+          </div>
+        </div>
       </div>
 
       <article class="article">
@@ -239,6 +286,63 @@ const goBack = () => {
       border-color: #C3272B;
       color: #C3272B;
       background: rgba(195, 39, 43, 0.04);
+    }
+  }
+}
+
+.status-card {
+  width: 70%;
+  max-width: 860px;
+  margin: 16px auto 0;
+
+  .status-card-body {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 20px;
+    background: #fffcf5;
+    border: 1px solid #ede6d8;
+    border-radius: 10px;
+  }
+
+  .status-card-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #999;
+    white-space: nowrap;
+    letter-spacing: 1px;
+  }
+
+  .status-btn-group {
+    display: flex;
+    gap: 6px;
+  }
+
+  .status-btn {
+    padding: 5px 14px;
+    border: 1px solid #ede6d8;
+    border-radius: 6px;
+    background: transparent;
+    font-size: 12px;
+    color: #999;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover:not(:disabled) {
+      border-color: #c3272b;
+      color: #c3272b;
+    }
+
+    &.active {
+      background: #c3272b;
+      color: #fff;
+      border-color: #c3272b;
+      font-weight: 500;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
   }
 }

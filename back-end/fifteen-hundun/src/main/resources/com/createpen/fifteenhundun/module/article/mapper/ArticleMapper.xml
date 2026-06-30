@@ -37,9 +37,17 @@
     </update>
     <select id="selectArticleList" resultType="com.createpen.fifteenhundun.module.article.pojo.Entity.Article">
         SELECT * FROM article
-        <if test="status != 3 and status != 2">
-            WHERE status = 3
-        </if>
-        LIMIT #{skip}, 10  <!-- 注意：这里建议传入计算好的偏移量offset -->
+        <where>
+            <if test="userStatus != 3 and userStatus != 2">
+                AND status = 3
+            </if>
+            <if test="belonging != null">
+                AND belonging = #{belonging}
+            </if>
+            <if test="articleStatus != null">
+                AND status = #{articleStatus}
+            </if>
+        </where>
+        ORDER BY created_at DESC
     </select>
 </mapper>
