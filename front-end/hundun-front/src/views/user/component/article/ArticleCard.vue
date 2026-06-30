@@ -14,7 +14,10 @@ const preview = computed(() => {
 })
 
 const belongingLabel = computed(() => {
-  const map = { 1: '帮助文档' }
+  const map = {
+    1: '帮助文档' ,
+    2: '知识分享'
+  }
   return map[props.article.belonging] || null
 })
 

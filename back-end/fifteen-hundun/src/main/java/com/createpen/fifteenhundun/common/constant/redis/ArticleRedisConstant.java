@@ -5,7 +5,7 @@ public class ArticleRedisConstant {
     public static final String ARTICLE = "article:";
     public static final Integer ARTICLE_EXPIRE = 30;
     //所有文章的缓存article:list
-    public static final String ARTICLE_LIST = "article:list";
+    public static final String ARTICLE_LIST = "article:list:";
     //所有文章缓存的过期时间
     public static final Integer ARTICLE_LIST_EXPIRE = 30;
     //用户点赞文章缓存 article:good:user:${articleId}:${userId}

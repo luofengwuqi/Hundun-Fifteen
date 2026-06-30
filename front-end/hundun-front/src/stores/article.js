@@ -7,8 +7,8 @@ export const useArticleStore = defineStore('article', () => {
 
   const currentVoteStatus = ref({})
 
-  const getArticleList = async () => {
-    const res = await getArticleListAPI()
+  const getArticleList = async (page) => {
+    const res = await getArticleListAPI(page)
     articleList.value = res.data
     return res
   }

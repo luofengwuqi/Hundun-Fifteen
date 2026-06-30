@@ -77,10 +77,10 @@ public class ArticleRedisService {
         }
     }
     //在redis插入文章列表
-    public void insertArticleListInRedis(List<Article> list) {
+    public void insertArticleListInRedis(List<Article> list,Integer page) {
         try{
             log.info("初始化文章列表缓存...");
-            redisTemplate.opsForValue().set(ARTICLE_LIST, list,ARTICLE_LIST_EXPIRE, TimeUnit.MINUTES);
+            redisTemplate.opsForValue().set(ARTICLE_LIST+page, list,ARTICLE_LIST_EXPIRE, TimeUnit.MINUTES);
         }catch (Exception e){
             log.error("插入文章列表缓存失败...");
             throw new RuntimeException("插入文章列表缓存失败...");

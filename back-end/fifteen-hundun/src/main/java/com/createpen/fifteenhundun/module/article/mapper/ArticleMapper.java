@@ -8,9 +8,10 @@ import org.apache.ibatis.annotations.*;
 import java.util.List;
 
 @Mapper
-public interface ArticleMapper {
-    @Select("select * from article")
-    List<Article> selectArticleList();
+public interface ArticleMapper{
+
+    List<Article> selectArticleList(Integer status , Integer skip);
+
 
     @Insert("INSERT INTO article (title, text, creator, belonging , created_at,user_id,status) VALUES (#{title}, #{text}, #{creator}, #{belonging},#{createdAt},#{userId},#{status})")
     void insertArticle(Article article);
@@ -26,4 +27,5 @@ public interface ArticleMapper {
 
     @Delete("delete from article where id = #{id}")
     void deleteArticleById(Integer id);
+
 }

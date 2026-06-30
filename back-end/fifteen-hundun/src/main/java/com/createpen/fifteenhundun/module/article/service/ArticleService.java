@@ -6,7 +6,7 @@ import com.createpen.fifteenhundun.module.article.pojo.Entity.Article;
 import java.util.List;
 
 public interface ArticleService {
-    List<Article> selectArticleList();
+    List<Article> selectArticleList(Integer Page);
 
     void insertArticle(InsertArticleDTO dto);
 

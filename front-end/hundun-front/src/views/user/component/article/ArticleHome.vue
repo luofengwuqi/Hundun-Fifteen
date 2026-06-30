@@ -3,6 +3,11 @@ import { ref, onMounted, computed } from 'vue'
 import { useArticleStore } from '@/stores/article'
 import ArticleCard from './ArticleCard.vue'
 
+const getType = (index)=>{
+  return typeArr[index]
+}
+const typeArr = ["null","帮助文档","知识分享"]
+
 const articleStore = useArticleStore()
 
 const loading = ref(true)
@@ -11,9 +16,11 @@ const searchText = ref('')
 const sortKey = ref('newest')
 const belongingFilter = ref(null)
 
+const page = ref(1)
+
 onMounted(async () => {
   loading.value = true
-  await articleStore.getArticleList()
+  await articleStore.getArticleList(page.value)
   loading.value = false
 })
 
@@ -106,7 +113,9 @@ const filteredArticles = computed(() => {
                 class="sort-tab"
                 :class="{ active: belongingFilter === b }"
                 @click="belongingFilter = b"
-              >{{ b === 1 ? '帮助文档' : '分类' + b }}</button>
+              >
+                {{ getType(b) }}
+              </button>
             </div>
           </div>
         </div>

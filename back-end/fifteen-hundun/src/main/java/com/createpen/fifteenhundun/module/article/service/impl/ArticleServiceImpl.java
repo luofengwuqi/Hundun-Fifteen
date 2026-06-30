@@ -33,6 +33,7 @@ import static com.createpen.fifteenhundun.common.constant.status.UserStatusConst
 @Service
 public class ArticleServiceImpl implements ArticleService {
 
+
     private final ArticleService articleService;
     private final UserService userService;
     private final ArticleGoodBadRedisService articleGoodBadRedisService;
@@ -51,7 +52,7 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
-    public List<Article> selectArticleList() {
+    public List<Article> selectArticleList(Integer page) {
         List<Article> listInRedis = articleRedisService.selectArticleListInRedis();
         if (listInRedis != null) {
             //查到了 直接返回
@@ -60,8 +61,10 @@ public class ArticleServiceImpl implements ArticleService {
         }
         //没查到 在数据库里查 查完放redis里 然后返回
         log.info("未命中缓存");
-        List<Article> list = articleMapper.selectArticleList();
-        articleRedisService.insertArticleListInRedis(list);
+        Integer status = getStatus();//status代表检验是否是管理员用户
+        Integer skip = (page - 1) * 10;
+        List<Article> list = articleMapper.selectArticleList(status, skip);
+        articleRedisService.insertArticleListInRedis(list,page);
         return list;
     }
 
@@ -229,13 +232,17 @@ public class ArticleServiceImpl implements ArticleService {
         log.info("同步点踩用户关系到mysql成功");
     }
 
+    private Integer getStatus(){
+        Long userId = BaseContext.getCurrentId();
+        User user = userService.selectUserById(userId);
+        return user.getStatus();
+    }
+
     @Transactional
     @Override
     public void deleteArticleById(Integer id) {
         //1 权限校验
-        Long userId = BaseContext.getCurrentId();
-        User user = userService.selectUserById(userId);
-        Integer status = user.getStatus();
+        Integer status = getStatus();
         //1.1 管理员
         if (status >= STATUS_ADMIN) {
             log.info("管理员操作 跳过检查");
@@ -244,8 +251,8 @@ public class ArticleServiceImpl implements ArticleService {
         else{
             log.info("用户操作 开始检查");
             Article article = articleService.selectArticleById(id);
-            if(!article.getUserId().equals(userId)) {
-                log.error("用户id:{} 操作文章id:{} 失败，没有权限", userId, id);
+            if(!article.getUserId().equals(BaseContext.getCurrentId())) {
+                log.error("用户id:{} 操作文章id:{} 失败，没有权限", BaseContext.getCurrentId(), id);
                 throw new UserNotFoundException("没有权限哦...");
             }
         }

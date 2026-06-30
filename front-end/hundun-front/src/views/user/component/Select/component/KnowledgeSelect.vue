@@ -20,7 +20,7 @@ const goDetail = (id) => {
   router.push(`/user/article/detail/${id}`)
 }
 
-const activeTab = ref('all')
+const activeTab = ref('own')
 const sortBy = ref('newest')
 const loading = ref(false)
 const error = ref('')

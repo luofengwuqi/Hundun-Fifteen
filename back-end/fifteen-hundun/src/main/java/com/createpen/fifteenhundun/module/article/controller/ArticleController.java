@@ -25,10 +25,10 @@ public class ArticleController {
         Article article = articleService.selectArticleById(id);
         return Result.success(article);
     }
-    //查询所有文章
+    //查询所有已经开放的文章
     @GetMapping
-    public Result<List<Article>> selectArticleList() {
-        List<Article> list = articleService.selectArticleList();
+    public Result<List<Article>> selectArticleList(@RequestParam Integer page) {
+        List<Article> list = articleService.selectArticleList(page);
         return Result.success(list);
     }
     //上传文章
