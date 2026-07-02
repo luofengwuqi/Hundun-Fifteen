@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { syncRedisToMysqlAPI } from '@/api/article.js'
 import { sendMemoEmailAPI } from '@/api/memoCommon.js'
+import { syncMusicFromOssAPI } from '@/api/music.js'
 
 // 定义功能分区配置 - 易于扩展
 const operationSections = ref([
@@ -24,6 +25,15 @@ const operationSections = ref([
       { label: '发送备忘邮件通知', type: 'warning', action: () => handleOperation('发送备忘邮件通知') },
     ]
   },
+  {
+    id: 'music-management',
+    title: '音乐管理',
+    icon: '🎵',
+    description: 'OSS文件与数据库同步相关操作',
+    operations: [
+      { label: 'OSS同步音乐到数据库', type: 'info', action: () => handleOperation('OSS同步音乐到数据库') },
+    ]
+  },
 
 ])
 
@@ -35,6 +45,8 @@ const handleOperation = async (operationName) => {
       await syncRedisToMysqlAPI()
     } else if (operationName === '发送备忘邮件通知') {
       await sendMemoEmailAPI()
+    } else if (operationName === 'OSS同步音乐到数据库') {
+      await syncMusicFromOssAPI()
     }
     ElMessage.success(`${operationName} 完成`)
   } catch (error) {

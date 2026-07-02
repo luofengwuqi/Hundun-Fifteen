@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -105,6 +106,57 @@ public class AliOSSUtil {
         } catch (Exception e) {
             log.error("文件删除OSS失败", e);
             throw new OSSException("文件删除失败");
+        } finally {
+            if (ossClient != null) {
+                ossClient.shutdown();
+            }
+        }
+    }
+
+    /**
+     * 获取OSS域名
+     */
+    public String getDomain() {
+        return aliyunProperties.getDomain();
+    }
+
+    /**
+     * 列出指定前缀下的所有文件对象名（支持分页）
+     * @param prefix 目录前缀，如：music/audio/
+     * @return 文件对象名列表
+     */
+    public List<String> listObjects(String prefix) {
+        OSS ossClient = null;
+        List<String> objectNames = new ArrayList<>();
+        try {
+            ossClient = new OSSClientBuilder().build(
+                aliyunProperties.getEndpoint(),
+                aliyunProperties.getAccessKeyId(),
+                aliyunProperties.getAccessKeySecret()
+            );
+
+            String nextMarker = null;
+            ObjectListing objectListing;
+
+            do {
+                ListObjectsRequest request = new ListObjectsRequest(aliyunProperties.getBucketName())
+                        .withPrefix(prefix)
+                        .withMarker(nextMarker);
+
+                objectListing = ossClient.listObjects(request);
+
+                for (OSSObjectSummary summary : objectListing.getObjectSummaries()) {
+                    objectNames.add(summary.getKey());
+                }
+
+                nextMarker = objectListing.getNextMarker();
+            } while (objectListing.isTruncated());
+
+            log.info("列出OSS目录 {} 下的文件，共 {} 个", prefix, objectNames.size());
+            return objectNames;
+        } catch (Exception e) {
+            log.error("列出OSS目录 {} 失败", prefix, e);
+            throw new OSSException("列出OSS目录失败: " + e.getMessage());
         } finally {
             if (ossClient != null) {
                 ossClient.shutdown();

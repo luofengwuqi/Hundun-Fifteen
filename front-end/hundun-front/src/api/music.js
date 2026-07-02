@@ -31,3 +31,8 @@ export const uploadCoverAPI = async (formData) => {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
 }
+
+// 从OSS同步音乐数据到数据库
+export const syncMusicFromOssAPI = async () => {
+  return await request.post('/music/task/oss')
+}
