@@ -15,3 +15,10 @@ nihao.txt
 misc.xml
 modules.xml
 vcs.xml
+# 敏感配置（含阿里云 AK/SK，勿提交）
+application-dev.yml
+**/application-dev.yml
+application-secret.yml
+**/application-secret.yml
+.env
+.env.*
